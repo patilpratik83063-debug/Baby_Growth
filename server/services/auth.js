@@ -115,7 +115,8 @@ export async function signInLink(ctx) {
   const email = normEmail(ctx.body.email);
   const user = one("SELECT id FROM users WHERE email = ? AND deleted_at IS NULL", email);
   if (user) {
-    const code = String(randomInt(0, 1e6)).padStart(6, "0");
+    const fixed = String(process.env.AUTH_FIXED_CODE || "").trim();
+    const code = fixed || String(randomInt(0, 1e6)).padStart(6, "0");
     run("INSERT OR REPLACE INTO sign_in_codes (email, code_hash, expires_at, attempts) VALUES (?,?,?,0)", email, sha(code), Date.now() + 10 * 60e3);
     await sendEmail(email, "Your GeoGrowth sign-in code", `Your sign-in code is ${code}. It expires in 10 minutes.`);
   }
