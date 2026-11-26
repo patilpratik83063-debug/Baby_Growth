@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard | GeoGrowth</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Raleway:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="app.css" />
+</head>
+<body>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<div class="app">
+  <aside class="side">
+    <a href="index.html" class="logo"><svg class="logo__mark" viewBox="0 0 26 22" aria-hidden="true"><rect x="0" y="12" width="6" height="10" rx="1.5" fill="#171717"/><rect x="10" y="6" width="6" height="16" rx="1.5" fill="#171717"/><rect x="20" y="0" width="6" height="22" rx="1.5" fill="#f25533"/></svg><span class="logo__text">Geo<span>Growth</span></span></a>
+    <select id="siteSelect" aria-label="Website"></select>
+    <nav id="nav">
+      <a href="#overview" data-view="overview">Overview</a>
+      <a href="#plan" data-view="plan">Content plan</a>
+      <a href="#articles" data-view="articles">Articles</a>
+      <a href="#visibility" data-view="visibility">AI visibility</a>
+      <a href="#audit" data-view="audit">GEO audit</a>
+      <a href="#backlinks" data-view="backlinks">Backlinks</a>
+      <a href="#integrations" data-view="integrations">Publishing</a>
+      <a href="#settings" data-view="settings">Business profile</a>
+      <a href="#billing" data-view="billing">Billing</a>
+      <a href="#account" data-view="account">Team &amp; API</a>
+    </nav>
+    <div class="side__foot">
+      <span id="whoami"></span>
+      <button id="logoutBtn" type="button">Log out</button>
+    </div>
+  </aside>
+  <main class="main" id="view"><div class="empty">Loading...</div></main>
+</div>
+<script src="shared.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

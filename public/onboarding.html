@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Get started | GeoGrowth</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Raleway:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="e-chatgpt" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><path d="M12 6.5v11M7.2 9.2l9.6 5.6M7.2 14.8l9.6-5.6"/></g></symbol>
+    <symbol id="e-claude" viewBox="0 0 24 24"><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4"/></g></symbol>
+    <symbol id="e-gemini" viewBox="0 0 24 24"><path fill="currentColor" d="M12 1.5c.8 5.6 4.9 9.7 10.5 10.5-5.6.8-9.7 4.9-10.5 10.5C11.2 16.9 7.1 12.8 1.5 12 7.1 11.2 11.2 7.1 12 1.5Z"/></symbol>
+    <symbol id="e-perplexity" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 2v20M5 7l7 5 7-5M5 7v10l7-5 7 5V7M5 7h14"/></g></symbol>
+  </defs>
+</svg>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<div class="ob">
+  <div class="ob__top">
+    <a href="index.html" class="logo"><svg class="logo__mark" viewBox="0 0 26 22" aria-hidden="true"><rect x="0" y="12" width="6" height="10" rx="1.5" fill="#171717"/><rect x="10" y="6" width="6" height="16" rx="1.5" fill="#171717"/><rect x="20" y="0" width="6" height="22" rx="1.5" fill="#f25533"/></svg><span class="logo__text">Geo<span>Growth</span></span></a>
+    <a href="index.html" style="font-size:14px;color:var(--muted)">Back to site</a>
+  </div>
+  <div class="ob__bar"><i id="obBar"></i></div>
+
+  <main class="ob__main">
+    <div class="bg-grid" aria-hidden="true"><div class="bg-grid__cells" id="bgGrid"></div></div>
+    <div class="ob__card">
+
+      <!-- 1. select-website -->
+      <section class="ob__step" data-step="select-website">
+        <p class="ob__count">Step 1 of 6</p>
+        <h1>What's your website?</h1>
+        <p class="lead">We'll read it to understand your business and find your best opportunities.</p>
+        <form class="url-form" id="siteForm" novalidate style="margin:0;max-width:none">
+          <input type="text" id="siteInput" placeholder="yourwebsite.com" aria-label="Your website" autocomplete="off" inputmode="url" spellcheck="false" />
+          <button class="btn btn--dark" type="submit" disabled>Continue <svg class="arrow" width="16" height="16"><use href="#i-arrow"/></svg></button>
+        </form>
+      </section>
+
+      <!-- 2. select-language -->
+      <section class="ob__step" data-step="select-language">
+        <p class="ob__count">Step 2 of 6</p>
+        <h1>Which language should we write in?</h1>
+        <p class="lead">Articles will be written and optimized in this language.</p>
+        <div class="options" id="langOptions" data-field="language" data-single></div>
+        <div class="ob__nav"><button class="btn btn--ghost" data-back>Back</button><button class="btn btn--dark" data-next>Continue</button></div>
+      </section>
+
+      <!-- 3. business-details -->
+      <section class="ob__step" data-step="business-details">
+        <p class="ob__count">Step 3 of 6</p>
+        <h1>Tell us about your business</h1>
+        <p class="lead" id="bizLead">We pre-filled what we could find on your site. Edit anything that's off.</p>
+        <div class="field"><label for="bizName">Business name</label><input id="bizName" /></div>
+        <div class="field"><label for="bizDesc">What do you offer?</label><textarea id="bizDesc"></textarea></div>
+        <div class="field"><label for="bizAudience">Who are your customers?</label><input id="bizAudience" placeholder="e.g. small dental clinics in the US" /></div>
+        <div class="ob__nav"><button class="btn btn--ghost" data-back>Back</button><button class="btn btn--dark" data-next>Continue</button></div>
+      </section>
+
+      <!-- 4. select-competitors -->
+      <section class="ob__step" data-step="select-competitors">
+        <p class="ob__count">Step 4 of 6</p>
+        <h1>Who are your competitors?</h1>
+        <p class="lead">Add up to 5 sites. We'll study what already ranks for them.</p>
+        <div class="tags-input" id="compBox"><input id="compInput" placeholder="competitor.com and press Enter" /></div>
+        <div class="ob__nav"><button class="btn btn--ghost" data-back>Back</button><button class="btn btn--dark" data-next>Continue</button></div>
+      </section>
+
+      <!-- 5. brand-voice -->
+      <section class="ob__step" data-step="brand-voice">
+        <p class="ob__count">Step 5 of 6</p>
+        <h1>How should your content sound?</h1>
+        <p class="lead">Pick up to 3. You can fine-tune this later.</p>
+        <div class="options" id="voiceOptions" data-field="voice" data-max="3"></div>
+        <div class="ob__nav"><button class="btn btn--ghost" data-back>Back</button><button class="btn btn--dark" data-next>Continue</button></div>
+      </section>
+
+      <!-- 6. email -->
+      <section class="ob__step" data-step="email">
+        <p class="ob__count">Step 6 of 6</p>
+        <h1>Where should we send your plan?</h1>
+        <p class="lead">Your first content plan is generated from everything above.</p>
+        <form id="emailForm" novalidate>
+          <div class="field"><label for="emailInput">Work email</label><input id="emailInput" type="email" placeholder="you@company.com" autocomplete="email" /></div>
+          <div class="ob__nav"><button class="btn btn--ghost" type="button" data-back>Back</button><button class="btn btn--accent" type="submit" id="finishBtn">Start 3-day trial <svg class="arrow" width="16" height="16"><use href="#i-arrow"/></svg></button></div>
+        </form>
+      </section>
+
+      <!-- verify code -->
+      <section class="ob__step" data-step="verify">
+        <p class="ob__count">Almost done</p>
+        <h1>Check your inbox</h1>
+        <p class="lead" id="verifyLead">We sent a 6-digit code to your email.</p>
+        <form id="codeForm" novalidate>
+          <div class="field"><label for="codeInput">Sign-in code</label><input id="codeInput" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" /></div>
+          <div class="ob__nav"><button class="btn btn--ghost" type="button" id="resendBtn">Resend code</button><button class="btn btn--accent" type="submit" id="codeBtn">Verify and start <svg class="arrow" width="16" height="16"><use href="#i-arrow"/></svg></button></div>
+        </form>
+      </section>
+
+      <!-- done -->
+      <section class="ob__step done-box" data-step="done">
+        <div class="check-big">&#10003;</div>
+        <h1>You're all set</h1>
+        <p class="lead" id="doneText">Your growth agent is building your content plan.</p>
+        <a class="btn btn--dark" href="app.html">Open your dashboard</a>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script src="shared.js"></script>
+<script src="onboarding.js"></script>
+</body>
+</html>

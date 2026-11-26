@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GeoGrowth: Get found on Google and in AI answers, on autopilot</title>
+  <meta name="description" content="GeoGrowth researches, writes and publishes content that ranks on Google and gets recommended by ChatGPT, Claude, Gemini and Perplexity." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Raleway:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<!-- Reusable SVG symbols -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c2.6 2.8 3.9 6 3.9 9.5S14.6 18.7 12 21.5C9.4 18.7 8.1 15.5 8.1 12S9.4 5.3 12 2.5Z"/></g></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4.5 6v6c0 4.4 3.2 8 7.5 9 4.3-1 7.5-4.6 7.5-9V6L12 3Z M8.5 12l2.4 2.4 4.6-4.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path fill="currentColor" d="m12 2.8 2.8 5.8 6.4.9-4.6 4.5 1.1 6.3L12 17.3l-5.7 3 1.1-6.3L2.8 9.5l6.4-.9L12 2.8Z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-pen" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4Z M13.5 6.5l4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></g></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M21 3 10 14M21 3l-7 18-4-7-7-4 18-7Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.5-.5-.5-2.5 2.5-2.5Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2c.6 4.7 2.7 7.4 8 8-5.3.6-7.4 3.3-8 10-.6-6.7-2.7-9.4-8-10 5.3-.6 7.4-3.3 8-8Z"/></symbol>
+    <symbol id="i-loader" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></symbol>
+    <!-- Generic AI engine marks (not official logos) -->
+    <symbol id="e-chatgpt" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><path d="M12 6.5v11M7.2 9.2l9.6 5.6M7.2 14.8l9.6-5.6"/></g></symbol>
+    <symbol id="e-claude" viewBox="0 0 24 24"><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4"/></g></symbol>
+    <symbol id="e-gemini" viewBox="0 0 24 24"><path fill="currentColor" d="M12 1.5c.8 5.6 4.9 9.7 10.5 10.5-5.6.8-9.7 4.9-10.5 10.5C11.2 16.9 7.1 12.8 1.5 12 7.1 11.2 11.2 7.1 12 1.5Z"/></symbol>
+    <symbol id="e-perplexity" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 2v20M5 7l7 5 7-5M5 7v10l7-5 7 5V7M5 7h14"/></g></symbol>
+    <symbol id="e-google" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" d="M20.5 12.2c0 4.8-3.4 8.3-8.4 8.3a8.5 8.5 0 1 1 5.8-14.7M20.5 12.2H12"/></symbol>
+  </defs>
+</svg>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<!-- ============ Header ============ -->
+<header class="header" id="header">
+  <div class="container header__inner">
+    <a href="#" class="logo" aria-label="GeoGrowth home">
+      <svg class="logo__mark" viewBox="0 0 26 22" aria-hidden="true"><rect x="0" y="12" width="6" height="10" rx="1.5" fill="#171717"/><rect x="10" y="6" width="6" height="16" rx="1.5" fill="#171717"/><rect x="20" y="0" width="6" height="22" rx="1.5" fill="#f25533"/></svg>
+      <span class="logo__text">Geo<span>Growth</span></span>
+    </a>
+    <nav class="nav" aria-label="Main">
+      <div class="nav__item" tabindex="0">Product <svg><use href="#i-chev"/></svg>
+        <div class="nav__menu">
+          <a href="#features">AI SEO agent<small>Research, write and publish</small></a>
+          <a href="#ai-check">AI visibility tracking<small>ChatGPT, Claude, Gemini, Perplexity</small></a>
+          <a href="#network">Backlink network<small>Contextual links, automatically</small></a>
+          <a href="#voice">Brand voice<small>Content that sounds like you</small></a>
+        </div>
+      </div>
+      <a class="nav__item" href="#results">Success Stories</a>
+      <div class="nav__item" tabindex="0">Pricing <svg><use href="#i-chev"/></svg>
+        <div class="nav__menu">
+          <a href="#pricing">Plans<small>Start with a 3-day trial</small></a>
+          <a href="#faq">Billing FAQ<small>Refunds and cancellations</small></a>
+        </div>
+      </div>
+      <a class="nav__item" href="#ebooks">Affiliate</a>
+      <div class="nav__item" tabindex="0">Learning Hub <svg><use href="#i-chev"/></svg>
+        <div class="nav__menu">
+          <a href="#ebooks">Free playbooks<small>AI search guides</small></a>
+          <a href="#ai-check">Free AI visibility check<small>See where you stand</small></a>
+        </div>
+      </div>
+    </nav>
+    <div class="header__actions">
+      <a class="link" href="sign-in.html">Log in</a>
+      <a class="btn btn--accent btn--sm btn--shimmer" href="onboarding.html" data-cta="header">Get started</a>
+      <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+    </div>
+  </div>
+  <nav class="mobile-nav" id="mobileNav" aria-label="Mobile">
+    <a href="#features">Product</a><a href="#results">Success Stories</a><a href="#faq">Pricing</a><a href="#ebooks">Learning Hub</a><a href="sign-in.html">Log in</a>
+  </nav>
+</header>
+
+<main>
+  <!-- ============ Hero ============ -->
+  <section class="hero" data-section="hero">
+    <div class="bg-grid" aria-hidden="true"><div class="bg-grid__cells" id="bgGrid"></div></div>
+    <div class="container hero__inner">
+      <a href="#network" class="pill">
+        <span class="pill__tag">Backlinks included</span>
+        <span>Join a <b>growing backlink exchange network</b></span>
+        <svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+      <h1>
+        Grow organic traffic<br />
+        <span class="line2"><span class="grad">on autopilot</span> from
+          <span class="engine is-in" id="engine"><svg class="engine__icon"><use href="#e-gemini"/></svg><span id="engineName">Gemini</span></span>
+        </span>
+      </h1>
+      <p class="hero__sub">Get recommended by Google and AI assistants without hiring an SEO agency.</p>
+
+      <form class="url-form" id="heroForm" novalidate>
+        <svg class="globe"><use href="#i-globe"/></svg>
+        <input type="text" id="heroUrl" placeholder="yourwebsite.com" aria-label="Your website" autocomplete="off" inputmode="url" spellcheck="false" />
+        <button class="btn btn--dark" type="submit" disabled>Start 3-day trial <svg class="arrow"><use href="#i-arrow"/></svg></button>
+      </form>
+      <p class="guarantee">If organic traffic doesn't grow within 90 days, <b>we refund you in full.</b> <svg><use href="#i-shield"/></svg></p>
+      <div><div class="rating">
+        <span class="rating__box">
+          <span class="stars"><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg></span>
+          4.8/5
+        </span>
+        <span>Rated by early customers</span>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- ============ Built to rank ============ -->
+  <section class="showcase">
+    <div class="container">
+      <h2 class="showcase__title">built to rank on <b class="grad" id="rankEngine">Google</b></h2>
+      <div class="showcase__grid">
+        <div class="mock reveal">
+          <div class="mock__bar"><svg width="14" height="14"><use href="#e-google"/></svg> Google Search &middot; "best family dentist near me"</div>
+          <div class="mock__body">
+            <div class="serp serp--you">
+              <div class="serp__url"><span class="serp__fav">Y</span> yourwebsite.com &rsaquo; family-dentistry</div>
+              <div class="serp__title">Family Dentist Guide: What to Look For in 2026</div>
+              <div class="serp__desc">A practical checklist for choosing a family dentist: insurance, hours, pediatric care and emergency visits.</div>
+              <span class="serp__badge">#1 &middot; written by GeoGrowth</span>
+            </div>
+            <div class="serp">
+              <div class="serp__url"><span class="serp__fav serp__fav--grey">C</span> competitor.com &rsaquo; blog</div>
+              <div class="serp__title">10 Dentists in Your Area</div>
+              <div class="serp__desc">A list of local clinics with addresses and phone numbers&hellip;</div>
+            </div>
+          </div>
+        </div>
+        <div class="mock reveal">
+          <div class="mock__bar"><svg width="14" height="14"><use href="#e-chatgpt"/></svg> AI assistant</div>
+          <div class="mock__body">
+            <div class="chat__q">Which family dentist would you recommend in my area?</div>
+            <div class="chat__a">
+              <p>Here are three well-reviewed options:</p>
+              <ol>
+                <li class="chat__hl"><b>Your Website Dental</b>: strong reviews for pediatric care, evening hours and a clear pricing page.</li>
+                <li><b>City Smiles</b>: convenient downtown location.</li>
+                <li><b>Bright Dental Co.</b>: accepts most insurance plans.</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Logos ============ -->
+  <section class="logos">
+    <h2>Used by founders and marketing teams</h2>
+    <div class="marquee"><div class="marquee__track" id="logoTrack">
+      <span>Northwind</span><span>Acme Legal</span><span>Bluepeak</span><span>Lumen&amp;Co</span><span>Harborline</span><span>Fieldstone</span><span>Orbitly</span><span>Cedar Dental</span><span>Kitebox</span><span>Vantage Tax</span>
+    </div></div>
+  </section>
+
+  <!-- ============ How it works ============ -->
+  <section class="section" id="how">
+    <div class="container center">
+      <p class="eyebrow">How it works</p>
+      <h2 class="section-title">Your organic growth, on autopilot</h2>
+      <p class="section-sub">One connected system that gets customers finding you on Google and in AI search.</p>
+      <div class="steps">
+        <article class="step reveal">
+          <span class="step__num">01</span>
+          <div class="step__art">
+            <div class="mini-search">
+              <div class="mini-search__bar">yourwebsite.com</div>
+              <div class="mini-search__row"><i></i> Keyword opportunities</div>
+              <div class="mini-search__row"><i></i> Competitor analysis</div>
+              <div class="mini-search__row"><i></i> AI search insights</div>
+            </div>
+          </div>
+          <h3>Understand your business</h3>
+          <p>We find your best opportunities across keywords, competitors and AI search.</p>
+          <div class="chips"><span class="chip"><i></i>Keyword research</span><span class="chip"><i></i>Competitor analysis</span></div>
+        </article>
+        <article class="step reveal" style="transition-delay:.1s">
+          <span class="step__num">02</span>
+          <div class="step__art">
+            <div class="orbit">
+              <div class="orbit__core">Standard content</div>
+              <span class="orbit__tag" style="top:6%;right:4%">Backlinks</span>
+              <span class="orbit__tag" style="bottom:8%;left:2%">Social reach</span>
+              <span class="orbit__tag" style="bottom:8%;right:2%">Technical SEO</span>
+            </div>
+          </div>
+          <h3>Build your visibility</h3>
+          <p>Publish optimized content, earn relevant backlinks and fix your technical SEO.</p>
+          <div class="chips"><span class="chip"><i></i>Standard content</span><span class="chip"><i></i>Backlinks</span><span class="chip"><i></i>Technical SEO</span></div>
+        </article>
+        <article class="step reveal" style="transition-delay:.2s">
+          <span class="step__num">03</span>
+          <div class="step__art">
+            <div class="bars" id="growthBars"><span class="bars__label">Growing visibility across Google &amp; AI</span></div>
+          </div>
+          <h3>Grow on autopilot</h3>
+          <p>Keep building visibility and turn search into regular traffic with less manual work.</p>
+          <div class="chips"><span class="chip"><i></i>Google + AI search</span><span class="chip"><i></i>Automated growth</span></div>
+        </article>
+      </div>
+      <div style="margin-top:40px"><a class="btn btn--accent" href="onboarding.html" data-cta="after_steps">Start your 3-day trial <svg class="arrow"><use href="#i-arrow"/></svg></a></div>
+    </div>
+  </section>
+
+  <!-- ============ Case studies ============ -->
+  <section class="section section--soft" id="results">
+    <div class="container">
+      <div class="cases-head">
+        <div><p class="eyebrow">The results</p><h2 class="section-title">Proven to work across industries</h2></div>
+        <a class="btn btn--dark btn--sm" href="#wall">See all <svg class="arrow"><use href="#i-arrow"/></svg></a>
+      </div>
+      <div class="cases" id="cases"><!-- filled by main.js --></div>
+      <p style="font-size:12px;color:var(--muted);margin-top:8px">Sample data for layout. Replace with your own customer results.</p>
+    </div>
+  </section>
+
+  <!-- ============ Features ============ -->
+  <section class="section" id="features">
+    <div class="container">
+      <p class="eyebrow">What you get</p>
+      <h2 class="section-title">Everything for organic growth</h2>
+      <div class="bento">
+        <article class="tile tile--lg reveal">
+          <div class="tile__head"><h3>Create articles that sound like you</h3><svg class="tile__icon"><use href="#i-pen"/></svg></div>
+          <p>We match your voice, highlight your business and write articles that rank and get cited, without sounding like generic AI.</p>
+          <div class="tile__art"><div class="doc"><i class="t"></i><i></i><i></i><i class="a" style="width:80%"></i><i></i><i style="width:60%"></i><i class="a" style="width:72%"></i><i></i></div></div>
+        </article>
+        <article class="tile tile--lg reveal">
+          <div class="tile__head"><h3>Get a strategy tailored to your site</h3><svg class="tile__icon"><use href="#i-grid"/></svg></div>
+          <p>We plan a full month of content around what is already ranking in your niche.</p>
+          <div class="tile__art"><div class="plan">
+            <div class="plan__card"><b>4</b><span class="tag tag--v">How-to guide</span>Choosing the right plan</div>
+            <div class="plan__card"><b>5</b><span class="tag tag--g">Listicle</span>Top tools compared</div>
+            <div class="plan__card"><b>6</b><span class="tag tag--b">Comparison</span>A vs B in 2026</div>
+            <div class="plan__card"><b>7</b><span class="tag tag--o">Business page</span>Pricing explained</div>
+            <div class="plan__card"><b>8</b><span class="tag tag--g">Research page</span>Industry stats</div>
+            <div class="plan__card"><b>9</b><span class="tag tag--v">Glossary</span>Key terms</div>
+          </div></div>
+        </article>
+        <article class="tile tile--sm reveal"><div class="tile__head"><h3>Publish without lifting a finger</h3><svg class="tile__icon"><use href="#i-send"/></svg></div><p>Articles go live on WordPress, Shopify, Wix, Webflow and more.</p></article>
+        <article class="tile tile--sm reveal"><div class="tile__head"><h3>Build authority without outreach</h3><svg class="tile__icon"><use href="#i-link"/></svg></div><p>Contextual links through our network. No agency, no cold emails.</p></article>
+        <article class="tile tile--sm reveal"><div class="tile__head"><h3>Fix what blocks your rankings</h3><svg class="tile__icon"><use href="#i-wrench"/></svg></div><p>Technical issues like slow pages, meta tags, missing JSON-LD schema and more.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ AI visibility check ============ -->
+  <section class="section" id="ai-check" style="padding-top:0">
+    <div class="container">
+      <div class="check reveal">
+        <p class="eyebrow">Free AI search audit</p>
+        <h2>Do ChatGPT, Claude, Perplexity &amp; Gemini recommend your website?</h2>
+        <div class="engines">
+          <span><svg><use href="#e-chatgpt"/></svg>ChatGPT</span><span><svg style="color:#d97757"><use href="#e-claude"/></svg>Claude</span>
+          <span><svg style="color:#20808d"><use href="#e-perplexity"/></svg>Perplexity</span><span><svg style="color:#4f7cf3"><use href="#e-gemini"/></svg>Gemini</span>
+        </div>
+        <form class="url-form" id="auditForm" novalidate>
+          <svg class="globe"><use href="#i-globe"/></svg>
+          <input type="text" id="auditUrl" placeholder="yourwebsite.com" aria-label="Website to audit" autocomplete="off" inputmode="url" spellcheck="false" />
+          <button class="btn btn--accent" type="submit" disabled><span>Run free audit</span> <svg class="arrow"><use href="#i-arrow"/></svg></button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Brand voice ============ -->
+  <section class="section section--soft" id="voice">
+    <div class="container">
+      <p class="eyebrow">Brand voice</p>
+      <h2 class="section-title">Content that sounds like you</h2>
+      <p class="section-sub">Every brand gets its own profile: colors, tone and products, so each article reads like your team wrote it.</p>
+      <div class="brands" id="brandTabs"></div>
+      <div class="profile" id="brandProfile"></div>
+      <div class="article">
+        <article class="article__main">
+          <div class="article__meta"><span id="artDate">Sample article</span><span class="tag tag--o" id="artTag">Marketing SaaS</span></div>
+          <h3 id="artTitle"></h3>
+          <p id="artLead"></p>
+          <h4>TL;DR</h4>
+          <ul id="artList"></ul>
+        </article>
+        <aside class="article__side">
+          <h4><svg width="18" height="18" style="color:var(--accent)"><use href="#i-spark"/></svg> Optimized for search</h4>
+          <p style="font-size:13px;color:var(--muted);margin-top:6px">Every article is optimized for Google and AI search before it goes live.</p>
+          <div class="checks">
+            <span><svg><use href="#i-check"/></svg>Answer-first writing</span><span><svg><use href="#i-check"/></svg>Credible sources</span>
+            <span><svg><use href="#i-check"/></svg>Optimal structure</span><span><svg><use href="#i-check"/></svg>Citations</span>
+            <span><svg><use href="#i-check"/></svg>Internal links</span><span><svg><use href="#i-check"/></svg>External links</span>
+            <span><svg><use href="#i-check"/></svg>Statistical data</span><span><svg><use href="#i-check"/></svg>FAQ schema</span>
+            <span><svg><use href="#i-check"/></svg>Image alt text</span><span><svg><use href="#i-check"/></svg>Semantic keywords</span>
+            <span><svg><use href="#i-check"/></svg>Optimized meta tags</span><span><svg><use href="#i-check"/></svg>JSON-LD schema</span>
+          </div>
+          <div class="kv" id="artStats"></div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Backlink network ============ -->
+  <section class="section" id="network">
+    <div class="container">
+      <div class="network reveal">
+        <div>
+          <p class="eyebrow">Backlink exchange</p>
+          <h2>A backlink network that gets stronger with every new customer.</h2>
+          <p>Every site that joins adds relevant, contextual link opportunities for everyone else. Links are matched by niche and placed inside real articles.</p>
+          <div class="network__stats">
+            <div><strong data-count="1200">0</strong><small>Sites in network</small></div>
+            <div><strong data-count="38">0</strong><small>Niches covered</small></div>
+            <div><strong data-count="96" data-suffix="%">0</strong><small>Contextual placements</small></div>
+          </div>
+          <a class="btn btn--ghost" href="onboarding.html" data-cta="backlinks">Join the network <svg class="arrow"><use href="#i-arrow"/></svg></a>
+        </div>
+        <div class="radar" id="radar"><span class="radar__you"></span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Big quote ============ -->
+  <section class="bigquote">
+    <div class="container">
+      <blockquote>&ldquo;Growing our Google impressions was already a big win, but now <span>our brand</span> is also getting discovered and recommended across AI assistants.&rdquo;</blockquote>
+      <div class="person"><span class="avatar" style="background:#8b6f5c">JD</span><div><b>Jordan D.</b><small>Head of Growth, sample customer</small></div></div>
+    </div>
+    <div class="cta-mini"><p>Your site could be the next success story.</p><a class="btn btn--accent" href="onboarding.html" data-cta="quote">Start your 3-day trial <svg class="arrow"><use href="#i-arrow"/></svg></a></div>
+  </section>
+
+  <!-- ============ Testimonials wall ============ -->
+  <section class="section" id="wall">
+    <div class="container center">
+      <p class="eyebrow">Customer stories</p>
+      <h2 class="section-title">Own the search on Google and across AI</h2>
+      <p class="section-sub">Teams use GeoGrowth to replace agencies, freelancers and a pile of SEO tools.</p>
+    </div>
+    <div class="wall" id="wallEl">
+      <div class="wall__row" id="wallRow1"></div>
+      <div class="wall__row wall__row--rev" id="wallRow2"></div>
+    </div>
+    <div class="cta-mini"><p>Join the brands growing organic traffic on autopilot.</p><a class="btn btn--accent" href="onboarding.html" data-cta="wall">Start your 3-day trial <svg class="arrow"><use href="#i-arrow"/></svg></a></div>
+  </section>
+
+  <!-- ============ Ebooks ============ -->
+  <section class="section section--soft" id="ebooks">
+    <div class="container center">
+      <p class="eyebrow">Free resources</p>
+      <h2 class="section-title">Three free playbooks to win AI search</h2>
+      <div class="ebooks" style="text-align:left">
+        <article class="ebook reveal"><div class="ebook__cover" style="background:linear-gradient(140deg,#171717,#3a2a25)"><small>Playbook 01</small><b>The AI Search Visibility Playbook</b></div><h3>Get cited by AI assistants</h3><p>How LLMs choose sources and how to become one of them.</p><a href="#ai-check">Get it free <svg width="14" height="14"><use href="#i-arrow"/></svg></a></article>
+        <article class="ebook reveal"><div class="ebook__cover" style="background:linear-gradient(140deg,#f25533,#f5a06a)"><small>Playbook 02</small><b>Content That Ranks in 2026</b></div><h3>Write once, rank twice</h3><p>One article structure that works for Google and for AI answers.</p><a href="#ai-check">Get it free <svg width="14" height="14"><use href="#i-arrow"/></svg></a></article>
+        <article class="ebook reveal"><div class="ebook__cover" style="background:linear-gradient(140deg,#2a5bd7,#7f99d1)"><small>Playbook 03</small><b>Local SEO for the AI Era</b></div><h3>Win "near me" questions</h3><p>Reviews, schema and pages that local AI answers trust.</p><a href="#ai-check">Get it free <svg width="14" height="14"><use href="#i-arrow"/></svg></a></article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FAQ ============ -->
+  <section class="section" id="faq">
+    <div class="container">
+      <h2 class="section-title center">FAQs</h2>
+      <div class="faq" id="faqList">
+        <details open><summary>What does GeoGrowth actually do?</summary><p>It researches your market, plans content, writes articles in your brand voice, publishes them to your site, builds contextual backlinks and tracks how often AI assistants mention you.</p></details>
+        <details><summary>How is this different from hiring an SEO agency?</summary><p>An agency bills for hours. GeoGrowth runs continuously, publishes on a schedule and shows every change in one dashboard, at a fraction of the cost.</p></details>
+        <details><summary>Will the content sound like AI?</summary><p>Each site gets a brand profile (tone, products, audience and examples), and every article is checked against it before publishing.</p></details>
+        <details><summary>Which platforms can you publish to?</summary><p>WordPress, Shopify, Wix, Webflow, Ghost, Framer and custom sites through a webhook or API.</p></details>
+        <details><summary>How do you measure AI search visibility?</summary><p>We run a fixed set of prompts for your category across ChatGPT, Claude, Gemini and Perplexity and record whether and where your brand appears.</p></details>
+        <details class="is-hidden"><summary>What kind of articles do you produce?</summary><p>How-to guides, listicles, comparisons, glossaries, research pages and business pages, chosen from your keyword plan.</p></details>
+        <details class="is-hidden"><summary>Is there a guarantee?</summary><p>If organic traffic does not grow within 90 days, you get a full refund.</p></details>
+        <details class="is-hidden"><summary>Can I cancel anytime?</summary><p>Yes. Plans are monthly and you can cancel from your dashboard.</p></details>
+      </div>
+      <div class="center"><button class="faq__more" id="faqMore">Show more <svg width="14" height="14"><use href="#i-chev"/></svg></button></div>
+    </div>
+  </section>
+
+  <!-- ============ Final CTA ============ -->
+  <section class="final">
+    <div class="container">
+      <h2>Start growing your traffic <span class="grad">today</span></h2>
+      <p class="section-sub">Set up in minutes. Your first article can be live today.</p>
+      <form class="url-form" id="finalForm" novalidate>
+        <svg class="globe"><use href="#i-globe"/></svg>
+        <input type="text" placeholder="yourwebsite.com" aria-label="Your website" autocomplete="off" inputmode="url" spellcheck="false" />
+        <button class="btn btn--dark" type="submit" disabled>Start 3-day trial <svg class="arrow"><use href="#i-arrow"/></svg></button>
+      </form>
+    </div>
+  </section>
+</main>
+
+<!-- ============ Footer ============ -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer__grid">
+      <div class="footer__about">
+        <a class="logo" href="#"><svg class="logo__mark" viewBox="0 0 26 22" aria-hidden="true"><rect x="0" y="12" width="6" height="10" rx="1.5" fill="#fff"/><rect x="10" y="6" width="6" height="16" rx="1.5" fill="#fff"/><rect x="20" y="0" width="6" height="22" rx="1.5" fill="#f25533"/></svg><span class="logo__text">Geo<span>Growth</span></span></a>
+        <p>Grow organic traffic from Google and AI search on autopilot.</p>
+        <div class="footer__social">
+          <a href="#" aria-label="LinkedIn"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5ZM3 9.5h4V21H3V9.5Zm7 0h3.8v1.6h.1c.5-1 1.8-2 3.8-2 4 0 4.8 2.6 4.8 6V21h-4v-5.1c0-1.2 0-2.8-1.7-2.8s-2 1.3-2 2.7V21h-4V9.5Z"/></svg></a>
+          <a href="#" aria-label="X"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M17.8 3h3.1l-6.8 7.7 8 10.3h-6.3l-4.9-6.4L5.3 21H2.2l7.3-8.3L1.8 3h6.4l4.4 5.9L17.8 3Zm-1.1 16.2h1.7L7.4 4.7H5.6l11.1 14.5Z"/></svg></a>
+        </div>
+      </div>
+      <div><h2>Product</h2><ul><li><a href="#features">AI SEO agent</a></li><li><a href="#features">AI blog writer</a></li><li><a href="#network">Backlinks</a></li><li><a href="#features">Auto-publishing</a></li><li><a href="#ai-check">Generative engine optimization</a></li><li><a href="#ai-check">Answer engine optimization</a></li></ul></div>
+      <div><h2>Free Tools</h2><ul><li><a href="#ai-check">GEO audit</a></li><li><a href="#ai-check">AI visibility checker</a></li><li><a href="#ai-check">Robots.txt checker</a></li><li><a href="#ai-check">Sitemap checker</a></li><li><a href="#ai-check">Meta description checker</a></li><li><a href="#ai-check">llms.txt validator</a></li></ul></div>
+      <div><h2>Company</h2><ul><li><a href="#faq">Pricing</a></li><li><a href="#results">Success Stories</a></li><li><a href="#ebooks">Blog</a></li><li><a href="#ebooks">Academy</a></li><li><a href="#ebooks">Affiliate</a></li></ul></div>
+    </div>
+    <div class="footer__bottom"><span>&copy; <span id="year"></span> GeoGrowth</span><a href="#">Privacy Policy</a><a href="#">Terms &amp; Conditions</a></div>
+  </div>
+</footer>
+
+<!-- Mobile sticky CTA -->
+<div class="sticky-cta" id="stickyCta"><a class="btn btn--accent" href="onboarding.html" data-cta="sticky_mobile">Start 3-day trial</a></div>
+
+<!-- Audit overlay -->
+<div class="audit-overlay" id="auditOverlay" role="dialog" aria-modal="true" aria-labelledby="auditTitle">
+  <div class="audit-box">
+    <div id="auditRunning">
+      <svg width="40" height="40" class="spin" style="color:var(--accent);margin:0 auto"><use href="#i-loader"/></svg>
+      <h2 id="auditTitle">Auditing <span class="site" id="auditSite"></span></h2>
+      <ul class="audit-steps" id="auditSteps">
+        <li><span class="dot"></span>Fetching your homepage</li>
+        <li><span class="dot"></span>Checking robots.txt and AI crawler access</li>
+        <li><span class="dot"></span>Looking for llms.txt and sitemap</li>
+        <li><span class="dot"></span>Reading structured data (JSON-LD)</li>
+        <li><span class="dot"></span>Scoring answer-readiness</li>
+      </ul>
+      <div class="progress"><i id="auditProgress"></i></div>
+    </div>
+    <div class="report" id="auditReport">
+      <h2 style="text-align:center">AI search audit for <span class="site" id="reportSite"></span></h2>
+      <div class="score">
+        <div class="score__ring" id="scoreRing"><b id="scoreNum">0</b></div>
+        <div><b style="font-size:17px;color:var(--ink)" id="scoreLabel"></b><p style="color:var(--muted);font-size:14px;margin-top:4px" id="scoreText"></p></div>
+      </div>
+      <div class="checks-list" id="checksList"></div>
+      <div class="report__actions">
+        <a class="btn btn--accent" id="reportCta" href="onboarding.html">Fix this automatically <svg class="arrow"><use href="#i-arrow"/></svg></a>
+        <button class="btn btn--ghost" id="auditClose" type="button">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="shared.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

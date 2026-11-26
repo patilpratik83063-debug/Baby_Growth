@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sign in | GeoGrowth</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Raleway:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="app.css" />
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="e-chatgpt" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><path d="M12 6.5v11M7.2 9.2l9.6 5.6M7.2 14.8l9.6-5.6"/></g></symbol>
+  <symbol id="e-claude" viewBox="0 0 24 24"><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4"/></g></symbol>
+  <symbol id="e-gemini" viewBox="0 0 24 24"><path fill="currentColor" d="M12 1.5c.8 5.6 4.9 9.7 10.5 10.5-5.6.8-9.7 4.9-10.5 10.5C11.2 16.9 7.1 12.8 1.5 12 7.1 11.2 11.2 7.1 12 1.5Z"/></symbol>
+  <symbol id="e-perplexity" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 2v20M5 7l7 5 7-5M5 7v10l7-5 7 5V7M5 7h14"/></g></symbol>
+</defs></svg>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<div class="auth-wrap">
+  <div class="bg-grid" aria-hidden="true"><div class="bg-grid__cells" id="bgGrid"></div></div>
+  <div class="auth-card">
+    <a href="index.html" class="logo"><svg class="logo__mark" viewBox="0 0 26 22" aria-hidden="true"><rect x="0" y="12" width="6" height="10" rx="1.5" fill="#171717"/><rect x="10" y="6" width="6" height="16" rx="1.5" fill="#171717"/><rect x="20" y="0" width="6" height="22" rx="1.5" fill="#f25533"/></svg><span class="logo__text">Geo<span>Growth</span></span></a>
+
+    <form id="emailStep" novalidate>
+      <h1>Welcome back</h1>
+      <p class="lead">Sign in with a one-time code or your password.</p>
+      <div class="field"><label for="email">Email</label><input id="email" type="email" autocomplete="email" placeholder="you@company.com" /></div>
+      <div class="field" id="pwField" hidden><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" /></div>
+      <button class="btn btn--dark" type="submit" id="emailBtn">Email me a sign-in code</button>
+      <p class="auth-alt"><button type="button" id="togglePw">Use password instead</button></p>
+      <p class="auth-alt">New here? <a href="onboarding.html">Start your 3-day trial</a></p>
+    </form>
+
+    <form id="codeStep" novalidate hidden>
+      <h1>Check your inbox</h1>
+      <p class="lead" id="codeLead">Enter the 6-digit code we emailed you.</p>
+      <div class="field"><label for="code">Sign-in code</label><input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" /></div>
+      <button class="btn btn--accent" type="submit" id="codeBtn">Sign in</button>
+      <p class="auth-alt"><button type="button" id="backBtn">Use a different email</button></p>
+    </form>
+  </div>
+</div>
+<script src="shared.js"></script>
+<script>
+(function () {
+  const { mountBgGrid, toast } = window.GG;
+  const $ = (s) => document.querySelector(s);
+  mountBgGrid($("#bgGrid"));
+  let usePw = false;
+  async function api(path, body) {
+    const r = await fetch("/api" + path, { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.message || "Something went wrong.");
+    return d;
+  }
+  const done = () => { location.href = "app.html"; };
+  fetch("/api/users/me", { credentials: "same-origin" }).then((r) => { if (r.ok) done(); });
+  $("#togglePw").onclick = () => {
+    usePw = !usePw;
+    $("#pwField").hidden = !usePw;
+    $("#emailBtn").textContent = usePw ? "Sign in" : "Email me a sign-in code";
+    $("#togglePw").textContent = usePw ? "Use a sign-in code instead" : "Use password instead";
+  };
+  $("#emailStep").onsubmit = async (e) => {
+    e.preventDefault();
+    const email = $("#email").value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return toast("Please enter a valid email.");
+    $("#emailBtn").disabled = true;
+    try {
+      if (usePw) { await api("/auth/sign-in", { email, password: $("#password").value }); done(); }
+      else { await api("/auth/sign-in-link", { email }); $("#emailStep").hidden = true; $("#codeStep").hidden = false; $("#codeLead").textContent = `If ${email} has an account, we sent it a 6-digit code.`; $("#code").focus(); }
+    } catch (err) { toast(err.message); } finally { $("#emailBtn").disabled = false; }
+  };
+  $("#codeStep").onsubmit = async (e) => {
+    e.preventDefault();
+    $("#codeBtn").disabled = true;
+    try { await api("/auth/verify-sign-in-code", { email: $("#email").value.trim(), code: $("#code").value.trim() }); done(); }
+    catch (err) { toast(err.message); } finally { $("#codeBtn").disabled = false; }
+  };
+  $("#backBtn").onclick = () => { $("#codeStep").hidden = true; $("#emailStep").hidden = false; };
+})();
+</script>
+</body>
+</html>
