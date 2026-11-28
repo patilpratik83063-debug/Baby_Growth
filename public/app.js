@@ -24,7 +24,7 @@
   let me, sites = [];
   async function boot() {
     me = await api("GET", "/users/me");
-    $("#whoami").textContent = me.email;
+    $("#whoami").textContent = me.username || me.email;
     const guestId = localStorage.getItem("gg_guest_id");
     if (guestId) { // a guest draft started before signing in: claim it
       const w = await act(() => api("POST", "/guest-onboarding/claim", { guestId }));
@@ -67,10 +67,8 @@
   views.overview = async () => {
     const [stats, checklist, acts, jobs] = await Promise.all([api("GET", "/organization/get-org-website-stats"), api("GET", "/overview/setup-checklist"), api("GET", "/overview/agent-activities"), pendingJobs()]);
     const site = sites.find((s) => s.id === siteId);
-    const sub = stats.subscription;
-    view.innerHTML = head(esc(site?.brandName || host(site?.url)), `<a href="${esc(site?.url)}" target="_blank" rel="noopener">${esc(host(site?.url))}</a>`) +
-      (sub.status === "trialing" ? `<div class="banner"><span>Your free trial ends ${date(sub.trialEndsAt)}. ${stats.usage.articlesThisMonth}/${stats.usage.articlesPerMonth} trial articles used.</span><a class="btn btn--accent btn-xs" href="#billing">Choose a plan</a></div>` :
-        !sub.active ? `<div class="banner"><span>Your plan is inactive, so autopilot is paused.</span><a class="btn btn--accent btn-xs" href="#billing">Reactivate</a></div>` : "") +
+    view.innerHTML = head(esc(site?.brandName || host(site?.url)), `<a href="${esc(site?.url)}" target="_blank" rel="noopener">${esc(host(site?.url))}</a> · ${stats.usage.articlesThisMonth}/${stats.usage.articlesPerMonth} articles this month`) +
+      (stats.usage.articlesThisMonth >= stats.usage.articlesPerMonth ? `<div class="banner"><span>Monthly article limit reached, so autopilot writing is paused until next month. Raise <code>LIMIT_ARTICLES_PER_MONTH</code> in the server's .env to change it.</span></div>` : "") +
       (jobs.length ? `<div class="banner"><span>Your growth agent is working: ${jobs.map((j) => esc(j.type.replace(/[._]/g, " "))).join(", ")}...</span></div>` : "") +
       `<div class="grid grid--4">
         <div class="card stat"><b>${stats.published}</b><span>Articles published</span></div>
@@ -255,26 +253,29 @@
     };
   };
 
-  /* ---------------- billing ---------------- */
-  views.billing = async () => {
-    const [s, inv] = await Promise.all([api("GET", "/subscriptions/get-org-website-subscription"), api("GET", "/subscriptions/invoices")]);
-    const planCard = (key) => { const p = s.plans[key]; const current = s.plan === key && s.status === "active"; return `<div class="card"><h3>${esc(p.name)} <b style="font-family:var(--font-head);font-size:22px">$${p.price}<small style="font-size:13px;color:var(--muted)">/mo</small></b></h3><div class="kv2" style="grid-template-columns:1fr"><span>Websites <b>${p.websites}</b></span><span>Articles per month <b>${p.articlesPerMonth}</b></span><span>AI prompts tracked <b>${p.prompts}</b></span><span>Backlink network <b>Included</b></span></div><div style="margin-top:14px">${current ? pill("active") : `<button class="btn btn--accent btn-xs" data-act="checkout" data-plan="${key}">Choose ${esc(p.name)}</button>`}</div></div>`; };
-    view.innerHTML = head("Billing", `Status: ${pill(s.status)} ${s.trialEndsAt && s.status === "trialing" ? "· trial ends " + date(s.trialEndsAt) : ""}`, s.hasBilling ? `<button class="btn btn--ghost btn-xs" data-act="portal">Manage billing</button>` : "") +
-      `<div class="grid grid--2" style="grid-template-columns:1fr 1fr">${planCard("grow")}${planCard("scale")}</div>
-       <div class="card" style="margin-top:16px"><h3>Usage this month</h3><div class="kv2"><span>Articles <b>${s.usage.articlesThisMonth}/${s.limits.articlesPerMonth}</b></span><span>Prompt limit <b>${s.limits.prompts}</b></span></div></div>
-       <div class="card" style="margin-top:16px"><h3>Invoices</h3>${inv.map((i) => `<div class="row"><div class="row__main"><b>${esc(i.number || i.id)}</b><small>${date(i.createdAt)}</small></div><span>${i.total} ${esc(i.currency.toUpperCase())}</span>${pill(i.status)}${i.url ? `<a class="btn btn--ghost btn-xs" href="${esc(i.url)}" target="_blank" rel="noopener">View</a>` : ""}</div>`).join("") || `<div class="empty">No invoices yet.</div>`}</div>`;
-  };
-
-  /* ---------------- team & API ---------------- */
+  /* ---------------- account & team ---------------- */
   views.account = async () => {
-    const org = await api("GET", "/organization");
-    view.innerHTML = head("Team & API", esc(org.name)) +
+    const [org, usage] = await Promise.all([api("GET", "/organization"), api("GET", "/usage")]);
+    const inp = 'style="flex:1;min-width:140px;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font:inherit"';
+    view.innerHTML = head("Account & team", `Signed in as <b>${esc(me.username || me.email)}</b>`) +
       `<div class="grid grid--2">
-        <div class="card"><h3>Members</h3>${org.members.map((m) => `<div class="row"><div class="row__main"><b>${esc(m.name || m.email)}</b><small>${esc(m.email)}</small></div>${pill(m.role)}</div>`).join("")}
-          <form id="inviteForm" style="display:flex;gap:8px;margin-top:12px"><input name="email" type="email" placeholder="teammate@company.com" style="flex:1;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font:inherit"><button class="btn btn--dark btn-xs">Invite</button></form></div>
+        <form class="card form" id="pwForm" style="max-width:none"><h3>Change password</h3>
+          <div class="field"><label>Current password</label><input name="currentPassword" type="password" autocomplete="current-password"></div>
+          <div class="field"><label>New password <small style="color:var(--muted)">(at least 8 characters)</small></label><input name="newPassword" type="password" autocomplete="new-password"></div>
+          <div><button class="btn btn--dark btn-xs">Update password</button></div></form>
+        <div class="card"><h3>Usage this month</h3><div class="kv2" style="grid-template-columns:1fr">
+          <span>Articles written <b>${usage.articlesThisMonth} / ${usage.limits.articlesPerMonth}</b></span>
+          <span>AI prompts per website <b>${usage.limits.prompts}</b></span><span>Websites <b>${usage.limits.websites}</b></span></div>
+          <p style="font-size:12.5px;color:var(--muted);margin-top:10px">Limits protect your OpenRouter credit. Change them with <code>LIMIT_*</code> in the server's .env.</p></div>
+      </div>
+      <div class="grid grid--2" style="margin-top:16px">
+        <div class="card"><h3>Team logins</h3>${org.members.map((m) => `<div class="row"><div class="row__main"><b>${esc(m.username || m.name || m.email)}</b><small>${esc(m.username ? "login ID" : m.email)}</small></div>${pill(m.role)}</div>`).join("")}
+          ${org.role === "owner" ? `<form id="memberForm" style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><input name="username" placeholder="Login ID" autocomplete="off" ${inp}><input name="password" type="password" placeholder="Password" autocomplete="new-password" ${inp}><button class="btn btn--dark btn-xs">Add login</button></form>` : ""}</div>
         <div class="card"><h3>API key</h3><p style="font-size:13.5px;color:var(--muted);margin-bottom:12px">Use <code>x-api-key</code> to call the API from your own tools.${org.apiKeyHint ? ` Current key ends in <b>${esc(org.apiKeyHint)}</b>.` : ""}</p><button class="btn btn--dark btn-xs" data-act="apikey">${org.apiKeyHint ? "Rotate key" : "Generate key"}</button><div id="keyBox" style="margin-top:10px"></div></div>
       </div>`;
-    $("#inviteForm").onsubmit = async (e) => { e.preventDefault(); if (await act(() => api("POST", "/organization/invite-member", { email: new FormData(e.target).get("email") }), "Invitation sent.")) route(); };
+    $("#pwForm").onsubmit = async (e) => { e.preventDefault(); const f = Object.fromEntries(new FormData(e.target)); if (await act(() => api("POST", "/auth/change-password", f), "Password updated.")) e.target.reset(); };
+    const mf = $("#memberForm");
+    if (mf) mf.onsubmit = async (e) => { e.preventDefault(); const f = Object.fromEntries(new FormData(e.target)); if (await act(() => api("POST", "/organization/invite-member", f), `Login "${f.username}" created.`)) route(); };
   };
 
   /* ---------------- add website ---------------- */
@@ -323,8 +324,6 @@
       else if (a === "int-del") { if (await act(() => api("DELETE", "/integrations/" + id), "Disconnected.")) route(); }
       else if (a === "int-hosted") { if (await act(() => api("POST", "/integrations", { type: "hosted" }), "Hosted blog enabled.")) route(); }
       else if (a === "brand-analysis") { await act(() => api("POST", "/organization/run-brand-analysis", { overwrite: false }), "Re-analyzing your website. Empty fields will be filled."); }
-      else if (a === "checkout") { const r = await act(() => api("POST", "/subscriptions/create-customer-checkout", { plan: b.dataset.plan })); if (r?.url) location.href = r.url; }
-      else if (a === "portal") { const r = await act(() => api("POST", "/subscriptions/create-portal-session")); if (r?.url) location.href = r.url; }
       else if (a === "apikey") { const r = await act(() => api("POST", "/organization/generate-api-key")); if (r) $("#keyBox").innerHTML = `<p style="font-size:13px">Copy it now. It won't be shown again.</p><div class="code-box">${esc(r.apiKey)}</div>`; }
     } finally { b.disabled = false; }
   });

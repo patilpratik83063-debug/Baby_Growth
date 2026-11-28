@@ -2,7 +2,7 @@
 
 An AI SEO and GEO (generative engine optimization) platform: onboarding, brand
 analysis, content plans, brand-voice articles, publishing, a backlink exchange,
-AI-search visibility tracking, GEO audits, free SEO tools and billing.
+AI-search visibility tracking, GEO audits and free SEO tools. Personal deployment: login ID + password, no billing.
 
 The product structure, API contract and data model were reverse-engineered
 from babylovegrowth.ai with **REA** (`rea-agents` 6.10.1). The brand, copy,
@@ -25,7 +25,7 @@ Open http://localhost:3000. Requires Node 24 or newer (it uses the built-in `nod
 - Dashboard: `/app.html`
 - Hosted blog: `/blog/:websiteId`
 
-Without `RESEND_API_KEY`, sign-in codes are printed to the server console. `GET /api/health` shows the active models.
+**Login:** set `ADMIN_USERNAME` and `ADMIN_PASSWORD` in `.env`. On startup the oldest existing account (or a new one) gets that login ID; the password is stored hashed and later changes in *Account & team* are kept. `ALLOW_SIGNUP=0` closes public sign-up. Usage limits (`LIMIT_*`) protect your OpenRouter credit. `GET /api/health` shows the active models.
 
 ## AI models (OpenRouter)
 
@@ -59,7 +59,6 @@ Every model and the search backend can be overridden in `.env` (for example `GEO
 | Guest onboarding contract: `x-guest-id`, `PUT draft {section,value,completesStep}`, business-info, organic-competitors, brand-colors, claim | Onboarding bundle (`inspect-web-page --include-script-sources`, `export-web-scripts`) | `server/services/onboarding.js` |
 | Website data model (`selectedLanguage`, `englishType`, `targetLocations`, `brandName`, `description`, `industry`, `targetAudience[]`, `mainServices[]`, `brandColor`, `brandSecondaryColor`, `exampleArticleUrl`, `heroImageStyle`, `sitemapUrl`, `competitors.urls`) | Onboarding bundle | `websites.profile` |
 | Public AI audit: start → poll every 5s until `isCompleted` → email capture | Landing bundle | `/public-llm-visibility/*` |
-| Plans: Grow $99, Scale $399 | Page JSON-LD | `billing.js` |
 | Hero tile background, engine rotator, marquee, sticky CTA, motion | Landing bundle + CSS | `public/` |
 
 **Not observable, so built as original work:**
@@ -70,14 +69,14 @@ Every model and the search backend can be overridden in `.env` (for example `GEO
 
 ```
 server/
-  index.js            routes (mirror the reference API map), static files, hosted blog, covers, Stripe webhook
+  index.js            routes (mirror the reference API map), static files, hosted blog, covers
   db.js               SQLite schema (node:sqlite)
   http.js             router, errors, cookies, rate limits
   crawl.js            SSRF-safe fetching, HTML facts, platform + brand colour detection, sitemaps, robots
   llm.js              OpenRouter: strict JSON outputs, long-form writing, web search with citations; retries; mock mode
   markdown.js         safe Markdown renderer, FAQ extraction
   services/
-    auth.js           password + email-code sign-in, sessions, API keys, email (Resend or console)
+    auth.js           login ID or email + password, owner bootstrap, teammate logins, sessions, API keys
     onboarding.js     guest + authenticated onboarding, business analysis, competitor discovery
     contentPlan.js    keyword-led monthly plan
     articles.js       research -> article -> FAQ + JSON-LD -> SEO checks -> SVG cover
@@ -86,7 +85,7 @@ server/
     visibility.js     AI-search prompt tracking, mentions, share of voice, sources; public audit
     geoAudit.js       19-check AI-readiness audit, share links
     seotools.js       robots, sitemap, H1, meta, canonical, OG, llms.txt validate/generate, keyword density
-    billing.js        plans, limits, Stripe Checkout/Portal/Webhook over REST
+    limits.js         monthly article / prompt / website limits (env-configurable)
     overview.js       activity feed, checklist, stats, milestones, autopilot scheduler
     jobs.js           durable SQLite job queue with retries and backoff
 public/               landing, onboarding, sign-in, dashboard
@@ -115,8 +114,8 @@ public/               landing, onboarding, sign-in, dashboard
 ## Safety
 
 - **Fetching:** every outbound fetch is DNS-checked against private, loopback and reserved ranges on each redirect hop. Only ports 80 and 443 are allowed, with timeouts and size caps.
-- **Secrets:** sessions are HttpOnly cookies storing a hashed token. Passwords use scrypt. Sign-in codes are hashed, expire after 10 minutes and allow 5 attempts.
-- **Credentials and webhooks:** integration credentials are encrypted at rest. Webhooks are HMAC-signed. The Stripe webhook signature is verified.
+- **Secrets:** sessions are HttpOnly cookies storing a hashed token. Passwords use scrypt. Login attempts are rate-limited (10 per minute per IP).
+- **Credentials and webhooks:** integration credentials are encrypted at rest. Webhooks are HMAC-signed.
 - **Rate limits:** per-IP limits on public, auth and heavy endpoints.
 - **Rendering:** article HTML comes only from the escaping Markdown renderer.
 

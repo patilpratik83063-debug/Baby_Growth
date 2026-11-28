@@ -84,22 +84,12 @@
       <!-- 6. email -->
       <section class="ob__step" data-step="email">
         <p class="ob__count">Step 6 of 6</p>
-        <h1>Where should we send your plan?</h1>
+        <h1>Create your login</h1>
         <p class="lead">Your first content plan is generated from everything above.</p>
         <form id="emailForm" novalidate>
-          <div class="field"><label for="emailInput">Work email</label><input id="emailInput" type="email" placeholder="you@company.com" autocomplete="email" /></div>
-          <div class="ob__nav"><button class="btn btn--ghost" type="button" data-back>Back</button><button class="btn btn--accent" type="submit" id="finishBtn">Start 3-day trial <svg class="arrow" width="16" height="16"><use href="#i-arrow"/></svg></button></div>
-        </form>
-      </section>
-
-      <!-- verify code -->
-      <section class="ob__step" data-step="verify">
-        <p class="ob__count">Almost done</p>
-        <h1>Check your inbox</h1>
-        <p class="lead" id="verifyLead">We sent a 6-digit code to your email.</p>
-        <form id="codeForm" novalidate>
-          <div class="field"><label for="codeInput">Sign-in code</label><input id="codeInput" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" /></div>
-          <div class="ob__nav"><button class="btn btn--ghost" type="button" id="resendBtn">Resend code</button><button class="btn btn--accent" type="submit" id="codeBtn">Verify and start <svg class="arrow" width="16" height="16"><use href="#i-arrow"/></svg></button></div>
+          <div class="field"><label for="emailInput">Email</label><input id="emailInput" type="email" placeholder="you@company.com" autocomplete="email" /></div>
+          <div class="field"><label for="pwInput">Password <small style="color:var(--muted)">(at least 8 characters)</small></label><input id="pwInput" type="password" autocomplete="new-password" /></div>
+          <div class="ob__nav"><button class="btn btn--ghost" type="button" data-back>Back</button><button class="btn btn--accent" type="submit" id="finishBtn">Create account <svg class="arrow" width="16" height="16"><use href="#i-arrow"/></svg></button></div>
         </form>
       </section>
 

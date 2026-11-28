@@ -9,7 +9,7 @@ import { askWithWebSearch, generateJson, seeded, ENGINES } from "../llm.js";
 import { hostOf, requireOrigin } from "../crawl.js";
 import { analyzeBusiness } from "./onboarding.js";
 import { enqueue } from "./jobs.js";
-import { planLimits } from "./billing.js";
+import { planLimits } from "./limits.js";
 
 export { ENGINES };
 const engineLabel = (k) => ENGINES[k]?.label || k;
@@ -146,7 +146,7 @@ const promptDto = (p) => {
 
 export function allowance(ctx) {
   const used = one("SELECT COUNT(*) n FROM visibility_prompts WHERE website_id = ?", ctx.website.id).n;
-  const limit = planLimits(ctx.org.id).prompts;
+  const limit = planLimits().prompts;
   return { data: { limit, used, remaining: Math.max(0, limit - used) } };
 }
 export const listPrompts = (ctx) => ({ data: all("SELECT * FROM visibility_prompts WHERE website_id = ? ORDER BY created_at", ctx.website.id).map(promptDto) });
@@ -275,7 +275,7 @@ export async function jobSeed(_p, websiteId) {
   if (one("SELECT 1 FROM visibility_prompts WHERE website_id = ? LIMIT 1", websiteId)) return { skipped: true };
   const profile = parse(w.profile, {});
   if (!profile.description) return { skipped: true, reason: "no business description yet" }; // don't track prompts for an unknown business
-  const limit = planLimits(w.org_id).prompts;
+  const limit = planLimits().prompts;
   const branded = brandPrompts(profile, w.url).slice(0, limit >= 6 ? 2 : 1);
   const discovery = await suggestPrompts(profile, w.url, Math.max(3, Math.min(8, limit - branded.length - 2))); // leave room for the user's own prompts
   for (const p of discovery) run("INSERT INTO visibility_prompts (id, website_id, prompt, kind, created_at) VALUES (?,?,?,?,?)", uid(), websiteId, p, "discovery", now());

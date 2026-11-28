@@ -23,22 +23,13 @@
   <div class="auth-card">
     <a href="index.html" class="logo"><svg class="logo__mark" viewBox="0 0 26 22" aria-hidden="true"><rect x="0" y="12" width="6" height="10" rx="1.5" fill="#171717"/><rect x="10" y="6" width="6" height="16" rx="1.5" fill="#171717"/><rect x="20" y="0" width="6" height="22" rx="1.5" fill="#f25533"/></svg><span class="logo__text">Geo<span>Growth</span></span></a>
 
-    <form id="emailStep" novalidate>
+    <form id="loginForm" novalidate>
       <h1>Welcome back</h1>
-      <p class="lead">Sign in with a one-time code or your password.</p>
-      <div class="field"><label for="email">Email</label><input id="email" type="email" autocomplete="email" placeholder="you@company.com" /></div>
-      <div class="field" id="pwField" hidden><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" /></div>
-      <button class="btn btn--dark" type="submit" id="emailBtn">Email me a sign-in code</button>
-      <p class="auth-alt"><button type="button" id="togglePw">Use password instead</button></p>
-      <p class="auth-alt">New here? <a href="onboarding.html">Start your 3-day trial</a></p>
-    </form>
-
-    <form id="codeStep" novalidate hidden>
-      <h1>Check your inbox</h1>
-      <p class="lead" id="codeLead">Enter the 6-digit code we emailed you.</p>
-      <div class="field"><label for="code">Sign-in code</label><input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" /></div>
-      <button class="btn btn--accent" type="submit" id="codeBtn">Sign in</button>
-      <p class="auth-alt"><button type="button" id="backBtn">Use a different email</button></p>
+      <p class="lead">Sign in with your login ID and password.</p>
+      <div class="field"><label for="loginId">Login ID or email</label><input id="loginId" autocomplete="username" autocapitalize="off" spellcheck="false" /></div>
+      <div class="field"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" /></div>
+      <button class="btn btn--dark" type="submit" id="loginBtn">Sign in</button>
+      <p class="auth-alt" id="signupHint" hidden>New here? <a href="onboarding.html">Create an account</a></p>
     </form>
   </div>
 </div>
@@ -48,38 +39,22 @@
   const { mountBgGrid, toast } = window.GG;
   const $ = (s) => document.querySelector(s);
   mountBgGrid($("#bgGrid"));
-  let usePw = false;
-  async function api(path, body) {
-    const r = await fetch("/api" + path, { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
-    const d = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(d.message || "Something went wrong.");
-    return d;
-  }
   const done = () => { location.href = "app.html"; };
   fetch("/api/users/me", { credentials: "same-origin" }).then((r) => { if (r.ok) done(); });
-  $("#togglePw").onclick = () => {
-    usePw = !usePw;
-    $("#pwField").hidden = !usePw;
-    $("#emailBtn").textContent = usePw ? "Sign in" : "Email me a sign-in code";
-    $("#togglePw").textContent = usePw ? "Use a sign-in code instead" : "Use password instead";
-  };
-  $("#emailStep").onsubmit = async (e) => {
+  fetch("/api/auth/config").then((r) => r.json()).then((c) => { $("#signupHint").hidden = !c.data?.signupsOpen; }).catch(() => {});
+  $("#loginId").focus();
+  $("#loginForm").onsubmit = async (e) => {
     e.preventDefault();
-    const email = $("#email").value.trim();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return toast("Please enter a valid email.");
-    $("#emailBtn").disabled = true;
+    const id = $("#loginId").value.trim(), password = $("#password").value;
+    if (!id || !password) return toast("Enter your login ID and password.");
+    $("#loginBtn").disabled = true;
     try {
-      if (usePw) { await api("/auth/sign-in", { email, password: $("#password").value }); done(); }
-      else { await api("/auth/sign-in-link", { email }); $("#emailStep").hidden = true; $("#codeStep").hidden = false; $("#codeLead").textContent = `If ${email} has an account, we sent it a 6-digit code.`; $("#code").focus(); }
-    } catch (err) { toast(err.message); } finally { $("#emailBtn").disabled = false; }
+      const r = await fetch("/api/auth/sign-in", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ id, password }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.message || "Sign-in failed.");
+      done();
+    } catch (err) { toast(err.message); $("#password").select(); } finally { $("#loginBtn").disabled = false; }
   };
-  $("#codeStep").onsubmit = async (e) => {
-    e.preventDefault();
-    $("#codeBtn").disabled = true;
-    try { await api("/auth/verify-sign-in-code", { email: $("#email").value.trim(), code: $("#code").value.trim() }); done(); }
-    catch (err) { toast(err.message); } finally { $("#codeBtn").disabled = false; }
-  };
-  $("#backBtn").onclick = () => { $("#codeStep").hidden = true; $("#emailStep").hidden = false; };
 })();
 </script>
 </body>

@@ -1,12 +1,12 @@
 /* Guest onboarding funnel wired to the guest-onboarding API (same contract as the reference, recovered with REA):
-   select-website -> select-language -> business-details -> select-competitors -> brand-voice -> email -> verify */
+   select-website -> select-language -> business-details -> select-competitors -> brand-voice -> email + password */
 (function () {
   "use strict";
   const { mountBgGrid, bindUrlForm, normalizeUrlToOrigin, isValidUrl, toast } = window.GG;
   const $ = (s, r = document) => r.querySelector(s);
   mountBgGrid($("#bgGrid"));
 
-  const STEPS = ["select-website", "select-language", "business-details", "select-competitors", "brand-voice", "email", "verify", "done"];
+  const STEPS = ["select-website", "select-language", "business-details", "select-competitors", "brand-voice", "email", "done"];
   const GUEST_KEY = "gg_guest_id";
   const state = { website: "", language: "en", competitors: [], voice: [], email: "", suggestions: [] };
   let guestId = localStorage.getItem(GUEST_KEY);
@@ -104,7 +104,6 @@
         });
       } catch { hint.textContent = "Add competitors manually."; }
     },
-    verify: () => { $("#verifyLead").textContent = `We sent a 6-digit code to ${state.email || "your email"}.`; },
   };
 
   /* ---------- 4. competitors ---------- */
@@ -147,38 +146,23 @@
     "brand-voice": async () => { if (!state.voice.length) { toast("Pick at least one tone."); return false; } await saveDraft("voice", { tones: state.voice }); return true; },
   };
 
-  /* ---------- 6. email -> account ---------- */
+  /* ---------- 6. email + password -> account, signed in, agent starts ---------- */
   $("#emailForm").addEventListener("submit", async (e) => {
     e.preventDefault();
-    const email = $("#emailInput").value.trim();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { toast("Please enter a valid email."); return; }
+    const email = $("#emailInput").value.trim(), password = $("#pwInput").value;
+    if (!/^[^s@]+@[^s@]+.[^s@]{2,}$/.test(email)) { toast("Please enter a valid email."); return; }
+    if (password.length < 8) { toast("Password must be at least 8 characters."); return; }
     const btn = $("#finishBtn"); busy(btn, true);
     try {
-      await api("POST", "/guest-onboarding/set-email", { email });
-      state.email = email;
-      go("verify");
-    } catch (err) {
-      if (err.code === "EMAIL_TAKEN" || err.code === "GUEST_ACCOUNT_HAS_WEBSITES") { toast(err.message); setTimeout(() => (location.href = "sign-in.html?next=claim"), 1500); }
-      else fail(err);
-    } finally { busy(btn, false); }
-  });
-
-  /* ---------- 7. verify code -> start agent ---------- */
-  $("#codeForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const code = $("#codeInput").value.trim();
-    if (!/^\d{6}$/.test(code)) { toast("Enter the 6-digit code."); return; }
-    const btn = $("#codeBtn"); busy(btn, true);
-    try {
-      await api("POST", "/auth/verify-sign-in-code", { email: state.email, code });
+      await api("POST", "/guest-onboarding/set-email", { email, password });
       await api("POST", "/onboarding/start");
       localStorage.removeItem(GUEST_KEY);
       go("done");
-      setTimeout(() => (location.href = "app.html"), 1800);
-    } catch (err) { fail(err); } finally { busy(btn, false); }
-  });
-  $("#resendBtn").addEventListener("click", async () => {
-    try { await api("POST", "/auth/sign-in-link", { email: state.email }); toast("New code sent.", "ok"); } catch (e) { fail(e); }
+      setTimeout(() => (location.href = "app.html"), 1500);
+    } catch (err) {
+      if (err.code === "EMAIL_TAKEN") { toast(err.message); setTimeout(() => (location.href = "sign-in.html"), 1800); }
+      else fail(err);
+    } finally { busy(btn, false); }
   });
 
   function options(host, values, get, set, max = 1) {
@@ -199,6 +183,13 @@
 
   /* ---------- boot: resume a guest session or start from ?website= ---------- */
   (async () => {
+    // Personal deployments close sign-ups: send visitors to sign in (or to "Add website" if already signed in).
+    const cfg = await fetch("/api/auth/config").then((r) => r.json()).catch(() => ({}));
+    if (cfg.data && !cfg.data.signupsOpen) {
+      const me = await fetch("/api/users/me", { credentials: "same-origin" }).catch(() => null);
+      location.replace(me?.ok ? "app.html#add-site" : "sign-in.html");
+      return;
+    }
     const qs = new URLSearchParams(location.search).get("website");
     const fromQs = qs && normalizeUrlToOrigin(qs);
     if (guestId) {

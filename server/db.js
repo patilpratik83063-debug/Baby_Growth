@@ -123,6 +123,8 @@ function addColumn(table, column, def) {
 }
 addColumn("visibility_prompts", "kind", "TEXT NOT NULL DEFAULT 'discovery'"); // discovery | brand
 addColumn("visibility_runs", "error", "TEXT");
+addColumn("users", "username", "TEXT"); // login ID (case-insensitive), email also works
+db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(lower(username)) WHERE username IS NOT NULL");
 // Empty answers were once recorded as "not mentioned" (false zeros). They are failed calls: drop them.
 db.exec("DELETE FROM visibility_runs WHERE answer IS NULL OR trim(answer) = ''");
 

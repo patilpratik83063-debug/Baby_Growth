@@ -38,10 +38,14 @@ if [ ! -f "$ROOT/.env" ]; then
   echo "Installed .env from this deploy"
 else
   echo "Keeping existing $ROOT/.env"
-  # add the OpenRouter key if the server's config lacks it
-  if ! grep -q '^OPENROUTER_API_KEY=.\+' "$ROOT/.env" && grep -q '^OPENROUTER_API_KEY=' "$STAGE/.env"; then
-    grep '^OPENROUTER_API_KEY=' "$STAGE/.env" >> "$ROOT/.env"; echo "Added OPENROUTER_API_KEY"
-  fi
+  # add keys the server's config lacks (never overwrite existing values)
+  for key in OPENROUTER_API_KEY ADMIN_USERNAME ADMIN_PASSWORD ALLOW_SIGNUP LIMIT_ARTICLES_PER_MONTH LIMIT_PROMPTS LIMIT_WEBSITES; do
+    if ! grep -q "^$key=" "$ROOT/.env" && grep -q "^$key=" "$STAGE/.env"; then
+      grep "^$key=" "$STAGE/.env" >> "$ROOT/.env"; echo "Added $key"
+    fi
+  done
+  # old sign-in-code setting is no longer used
+  sed -i '/^AUTH_FIXED_CODE=/d' "$ROOT/.env"
 fi
 rm -f "$STAGE/.env"
 if [ -n "$PUBLIC_URL" ]; then
@@ -49,9 +53,6 @@ if [ -n "$PUBLIC_URL" ]; then
 fi
 sed -i '/^DATA_DIR=/d' "$ROOT/.env"; echo "DATA_DIR=$ROOT/data" >> "$ROOT/.env"
 chmod 600 "$ROOT/.env"
-if grep -q '^AUTH_FIXED_CODE=.\+' "$ROOT/.env"; then
-  echo "WARNING: AUTH_FIXED_CODE is set in $ROOT/.env. Anyone who knows that code can sign in to ANY account. Remove it on a public server."
-fi
 PORT=$(grep '^PORT=' "$ROOT/.env" | tail -1 | cut -d= -f2); PORT=${PORT:-3000}
 
 echo "==> Existing data"

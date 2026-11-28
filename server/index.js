@@ -18,7 +18,7 @@ import * as visibility from "./services/visibility.js";
 import * as geo from "./services/geoAudit.js";
 import * as seotools from "./services/seotools.js";
 import * as overview from "./services/overview.js";
-import * as billing from "./services/billing.js";
+import { planLimits, articlesThisMonth } from "./services/limits.js";
 import { registerJob, startWorker, listJobs, deleteJobs } from "./services/jobs.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -71,10 +71,7 @@ const r = createRouter();
 // AUTH
 r.post("/auth/sign-up", authRate, auth.signUp);
 r.post("/auth/sign-in", authRate, auth.signIn);
-r.get("/auth/sign-in-methods", authRate, auth.signInMethods);
-r.post("/auth/sign-in-link", authRate, auth.signInLink);
-r.post("/auth/verify-sign-in-code", authRate, auth.verifySignInCode);
-r.post("/auth/reset-password-request", authRate, auth.resetPasswordRequest);
+r.get("/auth/config", auth.authConfig);
 r.post("/auth/change-password", user, auth.changePassword);
 r.post("/auth/logout", auth.logout);
 
@@ -85,17 +82,9 @@ r.delete("/users/me", user, auth.deleteMe);
 
 // ORGANIZATION
 r.get("/organization", user, (ctx) => ({ data: { id: ctx.org.id, name: ctx.org.name, role: ctx.org.role, apiKeyHint: ctx.org.api_key_hint,
-  members: all("SELECT u.id, u.email, u.name, m.role FROM org_members m JOIN users u ON u.id = m.user_id WHERE m.org_id = ?", ctx.org.id) } }));
+  members: all("SELECT u.id, u.email, u.username, u.name, m.role FROM org_members m JOIN users u ON u.id = m.user_id WHERE m.org_id = ?", ctx.org.id) } }));
 r.put("/organization/update", ownerOnly, (ctx) => { const name = str(ctx.body.name, 80); if (name) run("UPDATE organizations SET name = ? WHERE id = ?", name, ctx.org.id); return { data: { ok: true } }; });
-r.post("/organization/invite-member", ownerOnly, async (ctx) => {
-  const email = str(ctx.body.email, 200).toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) throw new HttpError(400, "Please enter a valid email.");
-  let u = one("SELECT * FROM users WHERE email = ?", email);
-  if (!u) { const id = uid(); run("INSERT INTO users (id, email, name, created_at) VALUES (?,?,?,?)", id, email, email.split("@")[0], now()); u = { id }; }
-  run("INSERT OR IGNORE INTO org_members (org_id, user_id, role) VALUES (?,?,?)", ctx.org.id, u.id, "member");
-  await auth.sendEmail(email, `You're invited to ${ctx.org.name} on GeoGrowth`, "Sign in with this email to join the team.");
-  return { data: { ok: true } };
-});
+r.post("/organization/invite-member", ownerOnly, auth.addMember); // owner creates a teammate login (ID + password)
 r.delete("/organization/remove-member/:userId", ownerOnly, (ctx) => { if (ctx.params.userId === ctx.user.id) throw new HttpError(400, "You can't remove yourself."); run("DELETE FROM org_members WHERE org_id = ? AND user_id = ?", ctx.org.id, ctx.params.userId); return { data: { ok: true } }; });
 r.get("/organization/get-org-websites", user, onboarding.getOrgWebsites);
 r.get("/organization/get-org-website", website, onboarding.getOrgWebsite);
@@ -117,7 +106,7 @@ r.put("/organization/business-profile", website, onboarding.updateOrgWebsite);
 r.get("/organization/get-organic-competitors", website, heavy, onboarding.getOrganicCompetitors);
 
 // GUEST ONBOARDING (public, x-guest-id)
-r.post("/guest-onboarding/start", pub, onboarding.guestStart);
+r.post("/guest-onboarding/start", pub, auth.assertSignupsOpen, onboarding.guestStart);
 r.get("/guest-onboarding/session", onboarding.guestSession);
 r.put("/guest-onboarding/draft", onboarding.guestDraft);
 r.post("/guest-onboarding/set-email", authRate, onboarding.guestSetEmail);
@@ -188,16 +177,12 @@ r.post("/geo-audit/public/:auditId/email", pub, geo.publicEmail);
 r.get("/geo-audit/public/share/:shareToken", pub, geo.publicShare);
 
 // PUBLIC LLM VISIBILITY AUDIT
-r.post("/public-llm-visibility/start", heavy, visibility.publicStart);
+r.post("/public-llm-visibility/start", heavy, auth.assertSignupsOpen, visibility.publicStart);
 r.get("/public-llm-visibility/get-data", poll, visibility.publicData);
 r.post("/public-llm-visibility/email", pub, visibility.publicEmail);
 
-// SUBSCRIPTIONS
-r.get("/subscriptions/get-org-website-subscription", user, billing.getSubscription);
-r.post("/subscriptions/create-customer-checkout", ownerOnly, billing.createCheckout);
-r.post("/subscriptions/create-portal-session", ownerOnly, billing.createPortal);
-r.post("/subscriptions/cancel-subscription", ownerOnly, billing.cancelSubscription);
-r.get("/subscriptions/invoices", user, billing.invoices);
+// USAGE (no billing on a personal deployment)
+r.get("/usage", user, (ctx) => ({ data: { limits: planLimits(), articlesThisMonth: articlesThisMonth(ctx.org.id) } }));
 
 // ASYNC JOBS
 r.get("/async-jobs", website, listJobs);
@@ -247,10 +232,6 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://localhost");
   const ip = req.socket.remoteAddress || "unknown";
   try {
-    if (url.pathname === "/api/stripe/webhook" && req.method === "POST") {
-      const chunks = []; for await (const c of req) chunks.push(c);
-      return json(res, 200, billing.stripeWebhook(Buffer.concat(chunks).toString("utf8"), req.headers["stripe-signature"]));
-    }
     if (url.pathname.startsWith("/api/")) {
       const match = r.match(req.method, url.pathname.slice(4));
       if (!match) return json(res, 404, { message: "Not found.", code: "NOT_FOUND" });
@@ -277,7 +258,7 @@ const server = http.createServer(async (req, res) => {
 });
 
 visibility.rescoreStoredRuns();
-if (process.env.AUTH_FIXED_CODE) console.warn("[security] AUTH_FIXED_CODE is set: anyone who knows the code can sign in to ANY account. Never set it on a public server.");
+auth.bootstrapAdmin();
 startWorker();
 overview.startAutopilot();
 server.listen(PORT, () => console.log(`GeoGrowth running at http://localhost:${PORT}  (AI: ${isMock() ? "mock mode" : "OpenRouter, writer " + MODELS.writer})`));

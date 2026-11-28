@@ -3,7 +3,7 @@
 // /organization/get-org-website-stats.
 import { one, all, run, parse } from "../db.js";
 import { enqueueOnce } from "./jobs.js";
-import { subscriptionFor, planLimits, articlesThisMonth } from "./billing.js";
+import { planLimits, articlesThisMonth } from "./limits.js";
 
 export function agentActivities(ctx) {
   const rows = all("SELECT type, message, created_at FROM activities WHERE website_id = ? ORDER BY created_at DESC LIMIT 50", ctx.website.id);
@@ -40,8 +40,7 @@ export function websiteStats(ctx) {
     backlinksLive: c("SELECT COUNT(*) n FROM backlinks WHERE target_website_id = ? AND status = 'live'", id),
     geoScore: audit ? parse(audit.result, {}).score : null,
     aiMentionRate: vis.n ? Math.round((vis.m / vis.n) * 100) : null,
-    subscription: subscriptionFor(ctx.org.id),
-    usage: { articlesThisMonth: articlesThisMonth(ctx.org.id), articlesPerMonth: planLimits(ctx.org.id).articlesPerMonth },
+    usage: { articlesThisMonth: articlesThisMonth(ctx.org.id), articlesPerMonth: planLimits().articlesPerMonth },
   } };
 }
 
@@ -71,12 +70,10 @@ export function autopilotTick() {
   const horizon = new Date(Date.now() + 14 * 864e5).toISOString().slice(0, 10);
   const sites = all("SELECT * FROM websites WHERE onboarding_status = 'completed' AND autopilot = 1");
   for (const w of sites) {
-    const sub = subscriptionFor(w.org_id);
-    if (!sub.active) continue;
     const furthest = one("SELECT MAX(scheduled_for) d FROM content_plan WHERE website_id = ? AND status != 'skipped'", w.id).d;
     if (!furthest || furthest < horizon) enqueueOnce("content_plan.generate", { days: 30 }, { websiteId: w.id });
 
-    let remaining = planLimits(w.org_id).articlesPerMonth - articlesThisMonth(w.org_id);
+    let remaining = planLimits().articlesPerMonth - articlesThisMonth(w.org_id);
     const due = all("SELECT id FROM content_plan WHERE website_id = ? AND status = 'planned' AND scheduled_for <= ? ORDER BY scheduled_for LIMIT 3", w.id, today);
     for (const item of due) {
       if (remaining-- <= 0) break;

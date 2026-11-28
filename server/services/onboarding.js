@@ -17,8 +17,9 @@ import { one, all, run, uid, now, parse, websiteDto, logActivity } from "../db.j
 import { HttpError, bad, notFound, str, strArr } from "../http.js";
 import { requireOrigin, safeFetch, tryFetch, extract, detectPlatformFromHtml, extractBrandColors, checkDns, readSitemap, hostOf, normalizeUrlToOrigin } from "../crawl.js";
 import { generateJson, askWithWebSearch, MODELS } from "../llm.js";
-import { createAccount, sendEmail, orgForUser } from "./auth.js";
+import { createAccount, orgForUser, assertSignupsOpen, checkPassword, createSession } from "./auth.js";
 import { enqueue } from "./jobs.js";
+import { LIMITS } from "./limits.js";
 
 const SECTIONS = ["market", "business", "brand", "competitors", "voice"];
 
@@ -195,18 +196,13 @@ export async function guestSetEmail(ctx) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) throw bad("Please enter a valid email.");
   run("UPDATE guest_sessions SET email = ? WHERE id = ?", email, g.id);
   const existing = one("SELECT * FROM users WHERE email = ? AND deleted_at IS NULL", email);
-  if (existing) {
-    const org = orgForUser(existing.id);
-    if (org && one("SELECT 1 FROM websites WHERE org_id = ? LIMIT 1", org.id)) {
-      throw new HttpError(409, "This email already has an account with websites. Sign in to add this website.", "GUEST_ACCOUNT_HAS_WEBSITES");
-    }
-    throw new HttpError(409, "This email already has an account. Please sign in to continue.", "EMAIL_TAKEN");
-  }
-  const { user, orgId } = createAccount({ email, password: null });
+  if (existing) throw new HttpError(409, "This email already has an account. Sign in, then add this website from your dashboard.", "EMAIL_TAKEN");
+  assertSignupsOpen();
+  checkPassword(ctx.body.password);
+  const { user, orgId } = createAccount({ email, password: ctx.body.password });
   const website = claimDraft(g, orgId);
-  const { signInLink } = await import("./auth.js");
-  await signInLink({ ...ctx, body: { email } });
-  return { data: { userId: user.id, websiteId: website.id, nextStep: "verify-code" } };
+  createSession(ctx.res, user.id);
+  return { data: { userId: user.id, websiteId: website.id, nextStep: "dashboard" } };
 }
 
 export function guestClaim(ctx) {
@@ -250,6 +246,7 @@ export async function createOrgWebsite(ctx) {
   const dns = await checkDns(origin);
   if (!dns.valid) throw bad(dns.reason || "That website could not be reached.");
   if (one("SELECT 1 FROM websites WHERE org_id = ? AND url = ?", ctx.org.id, origin)) throw new HttpError(409, "This website is already in your account.");
+  if (one("SELECT COUNT(*) n FROM websites WHERE org_id = ?", ctx.org.id).n >= LIMITS.websites) throw new HttpError(403, `Website limit reached (${LIMITS.websites}). Raise LIMIT_WEBSITES in the server's .env.`, "WEBSITE_LIMIT");
   const id = uid();
   run("INSERT INTO websites (id, org_id, url, created_at) VALUES (?,?,?,?)", id, ctx.org.id, origin, now());
   enqueue("site.analyze", { language: "en" }, { websiteId: id });
@@ -349,4 +346,3 @@ export async function jobSiteSitemap(_p, websiteId) {
   return { pages: sm.urls.length };
 }
 
-export { sendEmail };
