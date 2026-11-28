@@ -52,8 +52,14 @@ async function chat(opts) {
     }
   }
 }
+// Reasoning models (e.g. gpt-5-nano) can spend the whole token budget thinking and return empty content.
+// Keep their reasoning short so the answer always fits. Override with GEO_REASONING_EFFORT.
+const REASONING_EFFORT = env("GEO_REASONING_EFFORT", "low");
+const isReasoningModel = (m) => /^openai\/(gpt-5|o\d)/.test(m) || /reasoning|thinking/.test(m);
+
 async function chatOnce({ model, messages, maxTokens = 8000, responseFormat, plugins, requireParameters = false, timeoutMs = 240_000 }) {
   const body = { model, messages, max_tokens: maxTokens };
+  if (isReasoningModel(model)) { body.reasoning = { effort: REASONING_EFFORT, exclude: true }; body.max_tokens = Math.max(maxTokens, 6000); }
   if (responseFormat) body.response_format = responseFormat;
   if (plugins) body.plugins = plugins;
   if (requireParameters) body.provider = { require_parameters: true };
@@ -148,7 +154,10 @@ export async function askWithWebSearch({ prompt, system, model = MODELS.research
   // "native" is not used by default: it is costly and did not fire for Anthropic models via OpenRouter.
   const plugins = model.startsWith("perplexity/") ? undefined
     : [{ id: "web", max_results: maxResults, ...(SEARCH_ENGINE !== "native" ? { engine: SEARCH_ENGINE } : {}), ...(SEARCH_MODE ? { mode: SEARCH_MODE } : {}) }];
-  const r = await chat({ model, messages, maxTokens: 3000, plugins });
+  let r = await chat({ model, messages, maxTokens: 3000, plugins });
+  // An empty answer is a failed call, never "the brand wasn't mentioned". Retry once, then fail loudly.
+  if (!r.content.trim()) r = await chat({ model, messages, maxTokens: 6000, plugins });
+  if (!r.content.trim()) throw new HttpError(502, `The AI returned an empty answer (${model}, finish: ${r.finish || "unknown"}).`, "AI_EMPTY");
   const sources = new Map();
   for (const a of r.annotations) {
     const c = a?.url_citation;

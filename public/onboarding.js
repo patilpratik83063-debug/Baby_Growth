@@ -82,7 +82,9 @@
         if (!$("#bizAudience").value) $("#bizAudience").value = (data.targetAudience || []).join("; ");
         state.industry = data.industry; state.mainServices = data.mainServices || [];
         if (!state.voice.length && data.voice?.length) { state.voice = data.voice.filter((v) => VOICES.includes(v)).slice(0, 3); paintVoice(); }
-        $("#bizLead").textContent = "We pre-filled this from your website. Edit anything that's off.";
+        $("#bizLead").textContent = data.needsReview
+          ? "We couldn't read your website's content (it may load with JavaScript, or the domain may be parked). Please describe your business so we track the right AI search questions."
+          : data.contentSource === "web_search" ? "Your site loads with JavaScript, so we filled this from a web search. Please check it." : "We pre-filled this from your website. Edit anything that's off.";
       } catch (e) { $("#bizLead").textContent = "Tell us in a sentence or two what you do."; }
     },
     "select-competitors": async () => {

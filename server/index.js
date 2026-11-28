@@ -169,6 +169,7 @@ r.get("/llm-visibility/prompts", website, visibility.listPrompts);
 r.post("/llm-visibility/prompts", website, visibility.createPrompt);
 r.get("/llm-visibility/prompt-allowance", website, visibility.allowance);
 r.get("/llm-visibility/prompts/:promptId", website, visibility.getPrompt);
+r.post("/llm-visibility/prompts/:promptId/create-content", website, heavy, visibility.createContentForPrompt);
 r.put("/llm-visibility/prompts/:promptId", website, visibility.updatePrompt);
 r.delete("/llm-visibility/prompts/:promptId", website, visibility.deletePrompt);
 r.post("/llm-visibility/run", website, visibility.runNow);
@@ -275,6 +276,8 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
+visibility.rescoreStoredRuns();
+if (process.env.AUTH_FIXED_CODE) console.warn("[security] AUTH_FIXED_CODE is set: anyone who knows the code can sign in to ANY account. Never set it on a public server.");
 startWorker();
 overview.startAutopilot();
 server.listen(PORT, () => console.log(`GeoGrowth running at http://localhost:${PORT}  (AI: ${isMock() ? "mock mode" : "OpenRouter, writer " + MODELS.writer})`));

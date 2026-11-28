@@ -8,7 +8,7 @@ import { HttpError, bad } from "../http.js";
 import { PUBLIC_BASE_URL } from "./publishing.js";
 
 export const PLANS = {
-  trial: { name: "Trial", price: 0, websites: 1, articlesPerMonth: 3, prompts: 5 },
+  trial: { name: "Trial", price: 0, websites: 1, articlesPerMonth: 3, prompts: 8 },
   grow: { name: "Grow", price: 99, websites: 1, articlesPerMonth: 30, prompts: 10 },
   scale: { name: "Scale", price: 399, websites: 5, articlesPerMonth: 150, prompts: 50 },
 };

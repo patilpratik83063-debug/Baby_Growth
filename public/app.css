@@ -53,7 +53,8 @@
 .tabs-s button { border: 1px solid var(--line); background: #fff; border-radius: 99px; padding: 7px 14px; font: inherit; font-size: 13.5px; cursor: pointer; }
 .tabs-s button.is-on { background: var(--ink); color: #fff; border-color: var(--ink); }
 .bar-chart { display: flex; align-items: flex-end; gap: 4px; height: 120px; padding-top: 8px; }
-.bar-chart span { flex: 1; background: linear-gradient(180deg, #f7a089, var(--accent)); border-radius: 4px 4px 0 0; min-height: 3px; position: relative; }
+.bar-chart { justify-content: flex-start; }
+.bar-chart span { flex: 1; max-width: 56px; background: linear-gradient(180deg, #f7a089, var(--accent)); border-radius: 4px 4px 0 0; min-height: 3px; position: relative; }
 .banner { background: var(--accent-50); border: 1px solid var(--accent-100); color: var(--ink); border-radius: 12px; padding: 12px 16px; font-size: 14px; margin-bottom: 18px; display: flex; justify-content: space-between; gap: 12px; align-items: center; }
 .code-box { font-family: ui-monospace, monospace; font-size: 12.5px; background: var(--soft); border-radius: 8px; padding: 10px 12px; word-break: break-all; }
 .auth-wrap { min-height: 100vh; display: grid; place-items: center; padding: 24px; position: relative; isolation: isolate; }

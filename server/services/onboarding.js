@@ -43,11 +43,27 @@ async function readSite(origin) {
   return { home, x, corpus: [x.title, x.description, x.h1s.join(" | "), x.h2s.slice(0, 12).join(" | "), x.text.slice(0, 6000), ...extra].join("\n\n") };
 }
 
+// Phrases a model uses when it has nothing to go on. Never store them as the business description.
+const UNKNOWN_RE = /\b(no (site )?content|cannot be (verified|determined)|unable to determine|not (enough|sufficient) information|insufficient (content|information)|could not (find|determine)|unknown business|placeholder|parked domain|for sale)\b/i;
+
 export async function analyzeBusiness(origin, language = "en") {
-  const { home, x, corpus } = await readSite(origin);
+  const site = await readSite(origin);
+  const { home, x } = site;
+  let corpus = site.corpus;
+  // JavaScript-rendered or parked sites return (almost) no text. Ground the analysis with a web search instead of letting the model guess.
+  const thin = x.words < 80;
+  let grounded = false;
+  if (thin) {
+    const web = await askWithWebSearch({
+      prompt: `What does the company at ${hostOf(home.url)} do? Describe its products or services, who it serves, and where it operates. If you cannot find this specific website, say so plainly.`,
+      model: MODELS.research, maxResults: 5,
+      mock: () => ({ answer: "", sources: [] }),
+    }).catch(() => ({ answer: "", sources: [] }));
+    if (web.answer && !UNKNOWN_RE.test(web.answer.slice(0, 300))) { corpus += `\n\nWeb search results about ${hostOf(home.url)}:\n${web.answer.slice(0, 6000)}`; grounded = true; }
+  }
   const result = await generateJson({
-    system: "You analyze company websites for an SEO and AI-search growth platform. Be specific and factual; use only what the site supports.",
-    prompt: `Website: ${home.url}\nWrite all values in language code "${language}".\n\nSite content:\n${corpus}\n\nReturn the brand name, a 2-3 sentence description of what the business offers, its industry, 2-5 target audience segments, 3-8 main products or services, 0-5 target locations (countries or cities, empty if global), and 3 adjectives describing its tone of voice.`,
+    system: "You analyze company websites for an SEO and AI-search growth platform. Be specific and factual; use only what the content supports. If the content does not say what the business offers, return an empty string for description and industry and empty arrays, never a note about missing content.",
+    prompt: `Website: ${home.url}\nWrite all values in language code "${language}".\n\nSite content:\n${corpus || "(the homepage returned no readable text)"}\n\nReturn the brand name, a 2-3 sentence description of what the business offers, its industry, 2-5 target audience segments, 3-8 main products or services, 0-5 target locations (countries or cities, empty if global), and 3 adjectives describing its tone of voice.`,
     schema: BusinessSchema, model: MODELS.research,
     mock: () => ({
       brandName: x.ogSite || (x.title.split(/\s[|\-–—:·]\s/)[0] || hostOf(home.url)).trim(),
@@ -59,9 +75,16 @@ export async function analyzeBusiness(origin, language = "en") {
       voice: ["Professional", "Friendly", "Clear"],
     }),
   });
+  if (UNKNOWN_RE.test(result.description)) result.description = "";
+  if (UNKNOWN_RE.test(result.industry)) result.industry = "";
+  if (!result.description) { result.targetAudience = []; result.mainServices = []; }
   const colors = extractBrandColors(home.text);
   const platform = detectPlatformFromHtml(home.text, home.headers);
-  return { ...result, ...colors, platform: platform.platform, finalUrl: new URL(home.url).origin, lang: x.lang };
+  return {
+    ...result, ...colors, platform: platform.platform, finalUrl: new URL(home.url).origin, lang: x.lang,
+    contentSource: !thin ? "website" : grounded ? "web_search" : "none",
+    needsReview: thin && (!grounded || !result.description), // tell the user to check/complete the profile
+  };
 }
 
 /* ---------------- organic competitors (grounded with web search) ---------------- */
@@ -248,6 +271,9 @@ export function updateOrgWebsite(ctx) {
   if ("inBacklinkPool" in ctx.body) sets.in_backlink_pool = ctx.body.inBacklinkPool ? 1 : 0;
   const keys = Object.keys(sets);
   run(`UPDATE websites SET ${keys.map((k) => `${k} = ?`).join(", ")} WHERE id = ?`, ...keys.map((k) => sets[k]), w.id);
+  // Visibility tracking waits for a real business description; start it once the user provides one.
+  if (profile.description && w.onboarding_status === "completed" && !one("SELECT 1 FROM visibility_prompts WHERE website_id = ? LIMIT 1", w.id))
+    enqueue("visibility.seed", {}, { websiteId: w.id });
   return { data: websiteDto(one("SELECT * FROM websites WHERE id = ?", w.id)) };
 }
 

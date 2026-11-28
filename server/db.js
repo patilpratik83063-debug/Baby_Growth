@@ -116,6 +116,16 @@ CREATE INDEX IF NOT EXISTS idx_runs_site ON visibility_runs(website_id, created_
 CREATE INDEX IF NOT EXISTS idx_activity_site ON activities(website_id, created_at);
 `);
 
+/* ---------------- additive migrations (idempotent) ---------------- */
+function addColumn(table, column, def) {
+  const cols = db.prepare(`PRAGMA table_info(${table})`).all().map((c) => c.name);
+  if (!cols.includes(column)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${def}`);
+}
+addColumn("visibility_prompts", "kind", "TEXT NOT NULL DEFAULT 'discovery'"); // discovery | brand
+addColumn("visibility_runs", "error", "TEXT");
+// Empty answers were once recorded as "not mentioned" (false zeros). They are failed calls: drop them.
+db.exec("DELETE FROM visibility_runs WHERE answer IS NULL OR trim(answer) = ''");
+
 export const uid = () => randomUUID();
 export const now = () => new Date().toISOString();
 export const parse = (v, fallback) => { if (v == null) return fallback; try { return JSON.parse(v); } catch { return fallback; } };

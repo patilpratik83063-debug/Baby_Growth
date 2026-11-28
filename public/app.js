@@ -136,28 +136,51 @@
   /* ---------------- visibility ---------------- */
   views.visibility = async () => {
     const [ins, prompts, brands, sources, hist, allow] = await Promise.all([api("GET", "/llm-visibility/overall-insights"), api("GET", "/llm-visibility/prompts"), api("GET", "/llm-visibility/brands-mentioned"), api("GET", "/llm-visibility/top-sources"), api("GET", "/llm-visibility/history"), api("GET", "/llm-visibility/prompt-allowance")]);
-    const max = Math.max(1, ...hist.map((h) => h.mentionRate));
-    view.innerHTML = head("AI visibility", `How often AI search recommends ${esc(ins.brand)}. Engines: ${ins.engines.map(esc).join(", ")}.`, `<button class="btn btn--accent btn-xs" data-act="vis-run">Run checks now</button>`) +
+    const site = sites.find((s) => s.id === siteId);
+    const pct = (v) => v == null ? "–" : v + "%";
+    const winners = (ins.topCompetitors || []).slice(0, 3).map((b) => `<b>${esc(b.name)}</b>`).join(", ");
+    let notice = "";
+    if (!site?.description) notice = `<div class="banner"><span>Your business profile has no description yet, so we can't know which buyer questions to track. Add one and tracking starts automatically.</span><a class="btn btn--accent btn-xs" href="#settings">Complete profile</a></div>`;
+    else if (ins.pending) notice = `<div class="banner"><span>Checking ChatGPT, Claude, Gemini and Perplexity now. Results appear here as each prompt finishes.</span></div>`;
+    else if (ins.discoveryRuns > 0 && ins.mentionRate === 0)
+      notice = `<div class="banner" style="display:block"><b>AI search doesn't recommend ${esc(ins.brand)} for these buyer questions yet.</b> That is a real result from ${ins.discoveryRuns} live answers, not missing data.
+        ${winners ? `It recommends ${winners} instead.` : ""} ${ins.brandAwareness === 0 ? `It also didn't recognise your brand when asked about it directly, so check that your <a href="#settings">business profile</a> matches your website.` : ins.brandAwareness ? `When asked about you directly, AI knows you (${ins.brandAwareness}% of answers), so the gap is discovery.` : ""}
+        Open a prompt below to read each answer, then click <b>Create content</b> to plan an article that targets it.</div>`;
+    view.innerHTML = head("AI visibility", `How often AI search recommends ${esc(ins.brand)} when buyers ask unbranded questions. Engines: ${ins.engines.map(esc).join(", ")}.`, `<button class="btn btn--accent btn-xs" data-act="vis-run" ${ins.pending ? "disabled" : ""}>${ins.pending ? "Checking..." : "Run checks now"}</button>`) + notice +
       `<div class="grid grid--4">
-        <div class="card stat"><b>${ins.mentionRate}%</b><span>Mention rate (30d)</span></div>
-        <div class="card stat"><b>${ins.averagePosition ?? "–"}</b><span>Average position</span></div>
-        <div class="card stat"><b>${ins.shareOfVoice}%</b><span>Share of voice</span></div>
-        <div class="card stat"><b>${ins.runs}</b><span>Answers checked</span></div>
+        <div class="card stat"><b>${ins.discoveryRuns ? ins.mentionRate + "%" : "–"}</b><span>Mention rate (30d, unbranded questions)</span></div>
+        <div class="card stat"><b>${ins.averagePosition ? "#" + ins.averagePosition : "–"}</b><span>Average position when mentioned</span></div>
+        <div class="card stat"><b>${ins.discoveryRuns ? ins.shareOfVoice + "%" : "–"}</b><span>Share of voice vs competitors</span></div>
+        <div class="card stat"><b>${pct(ins.brandAwareness)}</b><span>Brand awareness (asked about you)</span></div>
       </div>
-      <div class="card" style="margin-top:16px"><h3>By AI engine</h3><div class="grid grid--4">${(ins.byEngine || []).map((e) => `<div class="stat"><b>${e.mentionRate ?? "–"}${e.mentionRate != null ? "%" : ""}</b><span>${esc(e.label)}${e.averagePosition ? ` · avg #${e.averagePosition}` : ""} · ${e.runs} answers</span></div>`).join("")}</div></div>
-      <div class="card" style="margin-top:16px"><h3>Mention rate over time</h3><div class="bar-chart">${hist.map((h) => `<span title="${esc(h.date)}: ${h.mentionRate}%" style="height:${(h.mentionRate / max) * 100}%"></span>`).join("") || `<div class="empty">No data yet.</div>`}</div></div>
+      <div class="card" style="margin-top:16px"><h3>By AI engine <small style="color:var(--muted);font-weight:500">${ins.runs} answers checked</small></h3><div class="grid grid--4">${(ins.byEngine || []).map((e) => `<div class="stat"><b>${pct(e.mentionRate)}</b><span>${esc(e.label)}${e.averagePosition ? ` · avg #${e.averagePosition}` : ""} · ${e.runs} answers</span></div>`).join("")}</div></div>
+      <div class="card" style="margin-top:16px"><h3>Mention rate over time</h3>${hist.length ? `<div class="bar-chart">${hist.map((h) => `<span title="${esc(h.date)}: ${h.mentionRate}% of ${h.runs} answers" style="height:${Math.max(2, h.mentionRate)}%"><i style="position:absolute;top:-18px;left:0;right:0;text-align:center;font-style:normal;font-size:11px;color:var(--muted)">${h.mentionRate}%</i></span>`).join("")}</div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:6px"><span>${esc(hist[0].date)}</span><span>${esc(hist[hist.length - 1].date)}</span></div>` : `<div class="empty">No data yet.</div>`}</div>
       <div class="grid grid--2" style="margin-top:16px">
         <div class="card"><h3>Tracked prompts <small style="color:var(--muted);font-weight:500">${allow.used}/${allow.limit}</small></h3>
-          <form id="addPrompt" style="display:flex;gap:8px;margin-bottom:8px"><input name="prompt" placeholder="e.g. What is the best CRM for small agencies?" style="flex:1;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font:inherit"><button class="btn btn--dark btn-xs">Track</button></form>
-          <div class="list">${prompts.map((p) => `<div class="row" data-id="${p.id}"><div class="row__main"><b style="white-space:normal">${esc(p.prompt)}</b><small>${p.lastRunAt ? "Checked " + ago(p.lastRunAt) : "Not checked yet"}${p.mentionRate != null ? ` · mentioned ${p.mentionRate}% of the time` : ""}</small></div><span title="${esc((p.engines || []).map((e) => `${e.label}: ${e.mentioned ? (e.position ? "#" + e.position : "mentioned") : "not mentioned"}`).join(" | "))}">${p.lastMentioned == null ? pill("queued") : pill(p.mentionedBy ? "yes" : "no").replace(/>(yes|no)</, `>${p.mentionedBy}/${p.enginesChecked} engines<`)}</span><button class="btn btn--ghost btn-xs" data-act="vis-del">Remove</button></div>`).join("") || `<div class="empty">No prompts yet.</div>`}</div></div>
+          <form id="addPrompt" style="display:flex;gap:8px;margin-bottom:8px"><input name="prompt" placeholder="e.g. What is the best CRM for small agencies?" style="flex:1;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font:inherit"><button class="btn btn--dark btn-xs" ${allow.remaining <= 0 ? "disabled title='Prompt limit reached'" : ""}>Track</button></form>
+          <div class="list">${prompts.map((p) => `<div class="row" data-id="${p.id}" style="flex-wrap:wrap"><div class="row__main" style="cursor:pointer" data-act="vis-open"><b style="white-space:normal">${p.kind === "brand" ? `<span class="pill-s planned" style="margin-right:6px">Brand</span>` : ""}${esc(p.prompt)}</b><small>${p.lastRunAt ? "Checked " + ago(p.lastRunAt) : "Not checked yet"}${p.mentionRate != null ? ` · mentioned ${p.mentionRate}% of the time` : ""} · <u>see answers</u></small></div><span title="${esc((p.engines || []).map((e) => `${e.label}: ${e.mentioned ? (e.position ? "#" + e.position : "mentioned") : "not mentioned"}`).join(" | "))}">${p.lastMentioned == null ? pill("queued") : `<span class="pill-s ${p.mentionedBy ? "yes" : "no"}">${p.mentionedBy}/${p.enginesChecked} engines</span>`}</span>${p.lastMentioned === false && p.kind !== "brand" ? `<button class="btn btn--accent btn-xs" data-act="vis-content">Create content</button>` : ""}<button class="btn btn--ghost btn-xs" data-act="vis-del">Remove</button><div class="vis-detail" style="flex-basis:100%"></div></div>`).join("") || `<div class="empty">No prompts yet.</div>`}</div></div>
         <div class="grid">
-          <div class="card"><h3>Brands AI recommends</h3>${brands.slice(0, 10).map((b) => `<div class="row"><div class="row__main"><b>${esc(b.name)}${b.isYou ? " (you)" : ""}</b></div><span>${b.mentions}</span></div>`).join("") || `<div class="empty">No data yet.</div>`}</div>
-          <div class="card"><h3>Most-cited sources</h3>${sources.slice(0, 10).map((s) => `<div class="row"><div class="row__main"><b>${esc(s.domain)}</b></div><span>${s.citations}</span></div>`).join("") || `<div class="empty">No data yet.</div>`}</div>
+          <div class="card"><h3>Brands AI recommends</h3>${brands.slice(0, 10).map((b) => `<div class="row"><div class="row__main"><b>${esc(b.name)}${b.isYou ? " (you)" : ""}</b>${b.domain ? `<small>${esc(b.domain)}</small>` : ""}</div><span>${b.mentions} answers</span></div>`).join("") || `<div class="empty">No data yet.</div>`}</div>
+          <div class="card"><h3>Most-cited sources <small style="color:var(--muted);font-weight:500">get featured here</small></h3>${sources.slice(0, 10).map((s) => `<div class="row"><div class="row__main"><b><a href="${esc(s.exampleUrl)}" target="_blank" rel="noopener">${esc(s.domain)}</a></b></div><span>${s.citations}</span></div>`).join("") || `<div class="empty">No data yet.</div>`}</div>
         </div>
       </div>`;
     $("#addPrompt").onsubmit = async (e) => { e.preventDefault(); if (await act(() => api("POST", "/llm-visibility/prompts", { prompt: new FormData(e.target).get("prompt") }), "Prompt added. Checking now...")) route(); };
-    if (prompts.some((p) => p.lastMentioned == null)) refreshWhilePending(async () => !(await pendingJobs()).length);
+    if (ins.pending || prompts.some((p) => p.lastMentioned == null)) refreshWhilePending(async () => !(await api("GET", "/llm-visibility/overall-insights")).pending, 6000);
   };
+
+  async function openPromptDetail(row, id) {
+    const box = row.querySelector(".vis-detail");
+    if (box.innerHTML) { box.innerHTML = ""; return; }
+    box.innerHTML = `<div class="empty">Loading answers...</div>`;
+    const p = await api("GET", "/llm-visibility/prompts/" + id);
+    const latest = new Map(); for (const r of p.runs) if (!latest.has(r.engine)) latest.set(r.engine, r);
+    const label = (k) => ({ chatgpt: "ChatGPT", claude: "Claude", gemini: "Gemini", perplexity: "Perplexity" })[k] || k;
+    box.innerHTML = [...latest.values()].map((r) => `<details style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:8px;background:#fff">
+      <summary style="cursor:pointer;font-size:13.5px"><b>${esc(label(r.engine))}</b> · ${r.mentioned ? `<span style="color:#1f8a4c">mentioned${r.position ? " #" + r.position : ""}</span>` : `<span style="color:#c2341a">not mentioned</span>`} · recommends ${r.brands.slice(0, 4).map((b) => esc(b.name)).join(", ") || "no brands"}</summary>
+      <div style="white-space:pre-wrap;font-size:13px;line-height:1.55;margin-top:8px;max-height:280px;overflow:auto">${esc(r.answer).replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, "$1").replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/^#{1,6}\s+(.+)$/gm, "<b>$1</b>")}</div>
+      ${r.sources.length ? `<div style="font-size:12px;margin-top:8px;color:var(--muted)">Sources: ${r.sources.slice(0, 6).map((s) => `<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(host(s.url))}</a>`).join(" · ")}</div>` : ""}
+    </details>`).join("") || `<div class="empty">No answers yet.</div>`;
+  }
 
   /* ---------------- GEO audit ---------------- */
   views.audit = async () => {
@@ -290,7 +313,9 @@
       } else if (a === "art-publish") { if (await act(() => api("POST", `/articles/${id}/publish`), "Published.")) route(); }
       else if (a === "art-regen") { if (await act(() => api("POST", `/articles/${id}/regenerate`), "Regenerating...")) location.hash = "plan"; }
       else if (a === "art-delete") { if (b.dataset.confirm) { if (await act(() => api("DELETE", "/articles/" + id), "Deleted.")) location.hash = "articles"; } else { b.dataset.confirm = "1"; b.textContent = "Click again to delete"; } }
-      else if (a === "vis-run") { await act(() => api("POST", "/llm-visibility/run"), "Checking AI search now..."); }
+      else if (a === "vis-run") { const r = await act(() => api("POST", "/llm-visibility/run"), "Checking AI search now..."); if (r) route(); }
+      else if (a === "vis-open") { await act(() => openPromptDetail(row, id)); }
+      else if (a === "vis-content") { const r = await act(() => api("POST", `/llm-visibility/prompts/${id}/create-content`)); if (r) toast(`Planned "${r.title}" for ${date(r.scheduledFor)}. See Content plan.`, "ok", 6000); }
       else if (a === "vis-del") { if (await act(() => api("DELETE", "/llm-visibility/prompts/" + id))) row.remove(); }
       else if (a === "audit-run") { if (await act(() => api("POST", "/geo-audit/start"), "Audit started.")) route(); }
       else if (a === "audit-share") { const r = await act(() => api("POST", "/geo-audit/share-link")); if (r) { const url = location.origin + "/api/geo-audit/public/share/" + r.shareToken; await navigator.clipboard?.writeText(url).catch(() => {}); toast("Share link copied: " + url, "ok", 6000); } }
