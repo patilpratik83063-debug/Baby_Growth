@@ -70,7 +70,8 @@ fi
 echo "==> Stop any old copy on port $PORT"
 systemctl stop geogrowth 2>/dev/null || true
 if command -v pm2 >/dev/null; then
-  for name in $(pm2 jlist 2>/dev/null | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{for(const p of JSON.parse(s))if(/server[\\/]index\.js|server\.js/.test(p.pm2_env.pm_exec_path||""))console.log(p.name)}catch{}})'); do
+  # match on working dir and args too: apps started with "npm start" have npm as their exec path
+  for name in $(pm2 jlist 2>/dev/null | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{for(const p of JSON.parse(s)){const e=p.pm2_env||{};const where=[e.pm_cwd,e.pm_exec_path,(e.args||[]).join(" ")].join(" ");if(/babygrowth|geogrowth|server[\\/]index\.js|server\.js/i.test(where))console.log(p.name)}}catch{}})'); do
     echo "Removing pm2 app $name"; pm2 delete "$name" || true
   done
   pm2 save 2>/dev/null || true
@@ -111,7 +112,12 @@ if command -v ufw >/dev/null && ufw status | grep -q "Status: active"; then ufw 
 
 echo "==> Health check"
 for i in $(seq 1 20); do
-  if out=$(curl -fsS "http://127.0.0.1:$PORT/api/health" 2>/dev/null); then echo "$out"; echo "DEPLOY OK: http://$(hostname -I | awk '{print $1}'):$PORT"; exit 0; fi
+  if out=$(curl -fsS "http://127.0.0.1:$PORT/api/health" 2>/dev/null); then
+    # make sure the port belongs to the new service, not a respawned old copy
+    owner=$(ss -ltnpH "sport = :$PORT" | grep -o 'pid=[0-9]*' | head -1 | cut -d= -f2)
+    if [ "$owner" = "$(systemctl show -p MainPID --value geogrowth)" ]; then echo "$out"; echo "DEPLOY OK: http://$(hostname -I | awk '{print $1}'):$PORT"; exit 0; fi
+    echo "Port $PORT is held by another process ($(tr '\0' ' ' < /proc/$owner/cmdline 2>/dev/null)); not the new service."; break
+  fi
   sleep 1
 done
 echo "Server did not become healthy. Last logs:"; journalctl -u geogrowth -n 40 --no-pager; exit 1
